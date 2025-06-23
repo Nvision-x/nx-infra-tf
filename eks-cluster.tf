@@ -10,6 +10,7 @@ module "eks" {
 
   cluster_endpoint_private_access          = var.cluster_endpoint_private_access
   cluster_endpoint_public_access           = var.cluster_endpoint_public_access
+  cluster_endpoint_public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
   enable_irsa                              = var.enable_irsa
   create_iam_role                          = var.create_iam_role
   iam_role_arn                             = var.cluster_iam_role_arn

@@ -42,7 +42,7 @@ module "opensearch" {
 
   advanced_security_options = {
     enabled                        = true
-    anonymous_auth_enabled         = false
+    anonymous_auth_enabled         = var.anonymous_auth_enabled
     internal_user_database_enabled = true
 
     master_user_options = {

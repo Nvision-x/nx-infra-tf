@@ -465,6 +465,13 @@ variable "auto_software_update_enabled" {
   default     = false
 }
 
+variable "anonymous_auth_enabled" {
+  description = "Whether to allow anonymous access to OpenSearch (not allowed during creation if set to true)"
+  type        = bool
+  default     = false
+}
+
+
 
 # --------------------- Tag -----------------------------
 

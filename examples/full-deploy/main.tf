@@ -48,7 +48,7 @@ module "nx" {
   subnet_group_description      = var.subnet_group_description
   username                      = var.username
   postgres_ingress_rules        = var.postgres_ingress_rules
-  
+
   # --------------------- OpenSearch ---------------------
 
   domain_name                           = var.domain_name
