@@ -7,7 +7,6 @@ Terraform module to provision the complete AWS infrastructure stack for the NX a
 - Amazon OpenSearch
 - EC2 instance for NFS
 - EC2 instance for Bastion
-- IAM roles, and other dependencies
 
 ---
 
