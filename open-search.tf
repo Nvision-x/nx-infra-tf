@@ -25,6 +25,8 @@ resource "aws_security_group" "opensearch_sg" {
   tags = var.tags
 }
 
+data "aws_caller_identity" "current" {}
+
 
 # OpenSearch module configuration
 module "opensearch" {
@@ -42,7 +44,7 @@ module "opensearch" {
 
   advanced_security_options = {
     enabled                        = true
-    anonymous_auth_enabled         = var.anonymous_auth_enabled
+    anonymous_auth_enabled         = false
     internal_user_database_enabled = true
 
     master_user_options = {
@@ -93,5 +95,22 @@ module "opensearch" {
   software_update_options = {
     auto_software_update_enabled = var.auto_software_update_enabled
   }
+  enable_access_policy  = true
+  create_access_policy  = false  # Because we're supplying access_policies directly
+
+  access_policies = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"
+        }
+        Action   = "es:*"
+        Resource = "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
+      }
+    ]
+  })
+
   tags = var.tags
 }

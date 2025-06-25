@@ -40,19 +40,21 @@ First, apply the `nx-iam-tf` module to create IAM roles and related resources.
 Then, pass its outputs as inputs to the `nx-infra-tf` module and run:
 
 ```
-terraform apply --target="module.nx"
+terraform apply --target=module.nx
 ```
 Once the infrastructure is created, extract the oidc_issuer_url from the outputs of nx-infra-tf.
 
 ### Step 2 – Final Apply.
 
 Update the nx-iam-tf module configuration with the oidc_issuer_url and re-apply it with enable_irsa = true.
-After the apply, extract the oidc_provider_arn from its outputs.
+After the apply, extract the autoscaler role ARN and load balancer controller role ARN from its outputs.
 
-Then set the correct OIDC Provider ARN in nx-infra-tf:
+Then set thos values in nx-infra-tf:
 
 ```
-oidc_provider_arn     = ""
+lb_controller_role_arn        = ""
+cluster_autoscaler_role_arn   = ""
+
 ```
 ```
 terraform apply
@@ -71,6 +73,8 @@ terraform apply
 | Name | Type |
 |------|------|
 | [aws_db_subnet_group.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_eks_access_entry.bastion_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry) | resource |
+| [aws_eks_access_policy_association.bastion_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association) | resource |
 | [aws_instance.bastion_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
 | [aws_instance.nfs_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/instance) | resource |
 | [aws_key_pair.bastion_ec2_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/key_pair) | resource |
@@ -82,6 +86,7 @@ terraform apply
 | [aws_security_group_rule.eks_control_plane_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [tls_private_key.bastion_ec2_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [tls_private_key.ec2_key](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 
@@ -98,10 +103,12 @@ terraform apply
 | <a name="input_bastion_ami"></a> [bastion\_ami](#input\_bastion\_ami) | The AMI ID for the EC2 instance | `string` | n/a | yes |
 | <a name="input_bastion_disk_size"></a> [bastion\_disk\_size](#input\_bastion\_disk\_size) | Size of the root volume in GB | `number` | `8` | no |
 | <a name="input_bastion_ec2_name"></a> [bastion\_ec2\_name](#input\_bastion\_ec2\_name) | The Name tag for the EC2 instance | `string` | `"nx-bastion-host"` | no |
+| <a name="input_bastion_eks_admin_role_arn"></a> [bastion\_eks\_admin\_role\_arn](#input\_bastion\_eks\_admin\_role\_arn) | ARN of the Bastion IAM role to grant EKS access | `string` | `""` | no |
 | <a name="input_bastion_existing_pem"></a> [bastion\_existing\_pem](#input\_bastion\_existing\_pem) | Existing PEM key to use, if provided | `string` | `""` | no |
 | <a name="input_bastion_ingress_rules"></a> [bastion\_ingress\_rules](#input\_bastion\_ingress\_rules) | List of ingress rules for Bastion EC2 security group | <pre>list(object({<br/>    description = string<br/>    from_port   = number<br/>    to_port     = number<br/>    protocol    = string<br/>    cidr_blocks = list(string)<br/>  }))</pre> | `[]` | no |
 | <a name="input_bastion_instance_type"></a> [bastion\_instance\_type](#input\_bastion\_instance\_type) | Instance type for the EC2 instance | `string` | `"t3.small"` | no |
 | <a name="input_bastion_key_name"></a> [bastion\_key\_name](#input\_bastion\_key\_name) | Name of the key pair to use for the Bastion EC2 instance | `string` | `""` | no |
+| <a name="input_bastion_profile_name"></a> [bastion\_profile\_name](#input\_bastion\_profile\_name) | Name of the IAM instance profile for Bastion | `string` | `""` | no |
 | <a name="input_bastion_public_subnet_id"></a> [bastion\_public\_subnet\_id](#input\_bastion\_public\_subnet\_id) | Private subnet ID where the Bastion EC2 instance will be deployed | `string` | `""` | no |
 | <a name="input_bastion_security_group_description"></a> [bastion\_security\_group\_description](#input\_bastion\_security\_group\_description) | Description for the Bastion EC2 security group | `string` | `"Allow SSH access"` | no |
 | <a name="input_bastion_security_group_name"></a> [bastion\_security\_group\_name](#input\_bastion\_security\_group\_name) | The name of the security group for the EC2 instance | `string` | n/a | yes |

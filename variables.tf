@@ -465,12 +465,17 @@ variable "auto_software_update_enabled" {
   default     = false
 }
 
-variable "anonymous_auth_enabled" {
-  description = "Whether to allow anonymous access to OpenSearch (not allowed during creation if set to true)"
-  type        = bool
-  default     = false
+variable "bastion_eks_admin_role_arn" {
+  description = "ARN of the Bastion IAM role to grant EKS access"
+  type        = string
+  default     = ""
 }
 
+variable "bastion_profile_name" {
+  description = "Name of the IAM instance profile for Bastion"
+  type        = string
+  default     = ""
+}
 
 
 # --------------------- Tag -----------------------------

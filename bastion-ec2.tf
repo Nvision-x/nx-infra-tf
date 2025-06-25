@@ -50,6 +50,7 @@ resource "aws_instance" "bastion_ec2" {
   vpc_security_group_ids      = [aws_security_group.bastion_ec2_sg[0].id]
   key_name                    = var.bastion_key_name
   associate_public_ip_address = true
+  iam_instance_profile        = var.bastion_profile_name
 
   root_block_device {
     volume_size           = var.bastion_disk_size
@@ -64,3 +65,28 @@ resource "aws_instance" "bastion_ec2" {
     }
   )
 }
+
+resource "aws_eks_access_entry" "bastion_access" {
+  count         = var.enable_bastion ? 1 : 0
+  cluster_name  = module.eks.cluster_name
+  principal_arn = var.bastion_eks_admin_role_arn
+  type          = "STANDARD"
+
+  tags = {
+    Name = "bastion-admin-access"
+  }
+}
+
+resource "aws_eks_access_policy_association" "bastion_access" {
+  count         = var.enable_bastion ? 1 : 0
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = var.bastion_eks_admin_role_arn
+
+  access_scope {
+    type       = "cluster"
+  }
+}
+
+
+

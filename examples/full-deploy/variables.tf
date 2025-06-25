@@ -105,6 +105,17 @@ variable "create_iam_role" {
   default     = false
 }
 
+variable "lb_controller_role_arn" {
+  description = "IAM Role ARN for the AWS Load Balancer Controller"
+  type        = string
+}
+
+variable "cluster_autoscaler_role_arn" {
+  description = "IAM Role ARN for the Cluster Autoscaler"
+  type        = string
+}
+
+
 # ----------------------------- Bastion --------------------------------------
 
 variable "enable_bastion" {
@@ -173,6 +184,18 @@ variable "bastion_security_group_name" {
 
 variable "bastion_existing_pem" {
   description = "Existing PEM key to use, if provided"
+  type        = string
+  default     = ""
+}
+
+variable "bastion_eks_admin_role_arn" {
+  description = "ARN of the Bastion IAM role to grant EKS access"
+  type        = string
+  default     = ""
+}
+
+variable "bastion_profile_name" {
+  description = "Name of the IAM instance profile for Bastion"
   type        = string
   default     = ""
 }

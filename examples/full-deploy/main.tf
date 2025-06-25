@@ -92,13 +92,14 @@ module "nx" {
   bastion_public_subnet_id    = var.bastion_public_subnet_id
   bastion_security_group_name = var.bastion_security_group_name
   bastion_ingress_rules       = var.bastion_ingress_rules
-
+  bastion_eks_admin_role_arn  = var.bastion_eks_admin_role_arn
+  bastion_profile_name        = var.bastion_profile_name
 }
 
 module "eks_addons" {
 
-  source = "git::https://github.com/Nvision-x/terraform-aws-eks-addons.git?ref=v1.0.0"
-  # source = "../../../terraform-aws-eks-addons"
+  # source = "git::https://github.com/Nvision-x/nx-eks-addons-tf"
+  source = "../../../nx-eks-addons-tf"
 
   # --------------------- EKS Addons ---------------------
 
@@ -106,19 +107,19 @@ module "eks_addons" {
   autoscaler_service_account    = var.autoscaler_service_account
   lb_controller_role_name       = var.lb_controller_role_name
   lb_controller_service_account = var.lb_controller_service_account
+  lb_controller_role_arn        = var.lb_controller_role_arn
+  cluster_autoscaler_role_arn   = var.cluster_autoscaler_role_arn
 
   # --------------------- EKS Cluster ---------------------
 
-  cluster_name      = module.nx.eks_cluster_name
-  oidc_provider_arn = var.oidc_provider_arn
-  namespace         = "kube-system"
-  region            = var.region
-  vpc_id            = var.vpc_id
-
-  # --------------------- Providers ---------------------
+  cluster_name = module.nx.eks_cluster_name
+  namespace    = "kube-system"
+  region       = var.region
+  vpc_id       = var.vpc_id
 
   providers = {
     helm    = helm.eks
     kubectl = kubectl.eks
   }
+
 }
