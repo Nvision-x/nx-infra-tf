@@ -98,7 +98,7 @@ module "nx" {
 
 module "eks_addons" {
 
-  source = "https://github.com/Nvision-x/nx-eks-addons-tf"
+  source = "git::https://github.com/Nvision-x/nx-eks-addons-tf.git"
   # source = "../../../nx-eks-addons-tf"
 
   # --------------------- EKS Addons ---------------------

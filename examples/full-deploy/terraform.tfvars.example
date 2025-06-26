@@ -7,7 +7,6 @@ vpc_cidr_block  = "10.0.0.0/16"
 # EKS
 cluster_name                    = "nx-eks"
 cluster_version                 = "1.33"
-oidc_provider_arn               = "arn:aws:iam::xxxxxxxxxxxx:oidc-provider/oidc.eks.us-east-2.amazonaws.com/id/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 cluster_iam_role_arn            = "arn:aws:iam::xxxxxxxxxxxx:role/cluster-iam-role"
 cluster_endpoint_private_access = true
 cluster_endpoint_public_access  = true
