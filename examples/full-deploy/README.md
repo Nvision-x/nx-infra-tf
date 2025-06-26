@@ -36,6 +36,12 @@ cp terraform.tfvars.example terraform.tfvars
 ```
 
 Then edit `terraform.tfvars` and update it with your environment-specific values (VPC ID, Subnets, Cluster Name, etc.).
+Use outputs of nx-iam-tf module to fill following values : 
+
+cluster_iam_role_arn
+iam_role_arn of eks_managed_node_groups
+bastion_eks_admin_role_arn
+bastion_profile_name
 
 ## 4. Initialize Terraform
 
@@ -51,7 +57,15 @@ This will download all required Terraform providers and modules.
 terraform apply -target=module.nx
 ```
 
-This creates the EKS cluster independently before applying addons or optional components.
+This module creates the EKS cluster independently before applying any Helm components. After the initial apply, retrieve the **oidc_provider_url** output and pass it to the **nx-iam-tf** module by setting **enable_irsa = true** and applying it again.
+
+This second apply will generate two additional outputs:
+
+```bash
+lb_controller_role_arn
+cluster_autoscaler_role_arn
+```
+Add these values to the .tfvars file of this module and perform the final apply.
 
 ## 6. Apply the Full Infrastructure
 
@@ -63,7 +77,7 @@ This completes the full Nx stack deployment, including addons, databases, OpenSe
 
 # 📋 Important Notes
 
-- If PostgreSQL, OpenSearch, or NFS resources are already created externally, set the following variables to `false` before applying:
+- If PostgreSQL, OpenSearch, NFS, Bastion resources are already created externally, set the following variables to `false` before applying:
 
 ```hcl
 enable_postgres   = false
@@ -84,7 +98,9 @@ terraform import 'module.nx.aws_security_group.opensearch_sg[0]' <opensearch-sec
 - Later, you can enable NFS creation by setting `enable_nfs = true` and reapplying Terraform.
 
 # 🛡️ Prerequisites
-- This must be executed on an EC2 instance/Github Runner which has access to the VPC where the resources will be deployed.
+
+- This must be executed on an EC2 instance or GitHub Runner with access to the VPC where the resources will be deployed. If running from a machine outside the VPC, ensure the EKS public endpoint is enabled by setting **cluster_endpoint_public_access = true**.
+
 - Terraform v1.0 or higher
 - AWS CLI 2 installed and configured
 - IAM user or role with permissions to create:
