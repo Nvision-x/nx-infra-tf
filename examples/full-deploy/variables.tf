@@ -60,11 +60,6 @@ variable "namespace" {
   default     = "kube-system"
 }
 
-variable "oidc_provider_arn" {
-  description = "oidc provider arn"
-  type        = string
-}
-
 variable "cluster_iam_role_arn" {
   description = "IAM role ARN for the EKS cluster"
   type        = string
