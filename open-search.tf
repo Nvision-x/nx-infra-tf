@@ -49,7 +49,7 @@ module "opensearch" {
 
     master_user_options = {
       master_user_name     = var.master_user_name
-      master_user_password =jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
+      master_user_password = jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
     }
   }
 

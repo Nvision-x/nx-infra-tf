@@ -19,10 +19,11 @@ resource "random_password" "opensearch" {
 
 # ---------- SECRETS MANAGER: POSTGRES ----------
 resource "aws_secretsmanager_secret" "postgres_secret" {
-  count       = var.enable_postgres ? 1 : 0
-  name        = "postgres-admin-password-${random_id.suffix.hex}"
-  description = "Admin password for PostgreSQL"
+  count                          = var.enable_postgres ? 1 : 0
+  name                           = "postgres-admin-password-${random_id.suffix.hex}"
+  description                    = "Admin password for PostgreSQL"
   force_overwrite_replica_secret = true
+  tags                           = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "postgres_secret_value" {
@@ -39,10 +40,11 @@ data "aws_secretsmanager_secret_version" "postgres" {
 
 # ---------- SECRETS MANAGER: OPENSEARCH ----------
 resource "aws_secretsmanager_secret" "opensearch_secret" {
-  count       = var.enable_opensearch ? 1 : 0
-  name        = "opensearch-admin-password-${random_id.suffix.hex}"
-  description = "Admin password for OpenSearch"
+  count                          = var.enable_opensearch ? 1 : 0
+  name                           = "opensearch-admin-password-${random_id.suffix.hex}"
+  description                    = "Admin password for OpenSearch"
   force_overwrite_replica_secret = true
+  tags                           = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "opensearch_secret_value" {

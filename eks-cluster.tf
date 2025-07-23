@@ -29,6 +29,7 @@ module "eks" {
     disk_size       = 50
     disk_encryption = true
   }
+  tags = var.tags
 }
 
 resource "aws_security_group_rule" "eks_control_plane_ingress" {

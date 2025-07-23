@@ -39,12 +39,14 @@ resource "aws_key_pair" "bastion_ec2_key" {
   count      = var.enable_bastion ? 1 : 0
   key_name   = var.bastion_key_name
   public_key = var.bastion_existing_pem == "" ? tls_private_key.bastion_ec2_key[0].public_key_openssh : file(var.bastion_existing_pem)
+  tags       = var.tags
 }
 
 resource "aws_secretsmanager_secret" "bastion_private_key" {
   count       = var.enable_bastion && var.bastion_existing_pem == "" ? 1 : 0
   name        = "${var.bastion_key_name}-private-key-${random_id.suffix.hex}"
   description = "Private key for bastion host SSH access"
+  tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "bastion_private_key_value" {

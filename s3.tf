@@ -4,9 +4,8 @@ resource "aws_s3_bucket" "nvisionx_logs" {
   force_destroy = false
 
   tags = {
-    Name        = "NvisionXLogsBucket"
-    Environment = "nvisionx-prod"
-    Purpose     = "Store NvisionX logs from Fluentd"
+    Name    = "NvisionxLogsBucket"
+    Purpose = "Store NvisionX logs from Fluentd"
   }
 }
 
