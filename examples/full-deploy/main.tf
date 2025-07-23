@@ -42,7 +42,6 @@ module "nx" {
   manage_master_user_password   = var.manage_master_user_password
   parameter_group_name          = var.parameter_group_name
   performance_insights_enabled  = var.performance_insights_enabled
-  postgres_password             = var.postgres_password
   postgres_version              = var.postgres_version
   skip_final_snapshot           = var.skip_final_snapshot
   subnet_group_description      = var.subnet_group_description
@@ -61,7 +60,6 @@ module "nx" {
   number_of_master_nodes                = var.number_of_master_nodes
   number_of_nodes                       = var.number_of_nodes
   opensearch_instance_type              = var.opensearch_instance_type
-  opensearch_master_user_password       = var.opensearch_master_user_password
   opensearch_security_group_description = "os-sg"
   opensearch_security_group_name        = var.opensearch_security_group_name
   opensearch_subnet_ids                 = var.opensearch_subnet_ids

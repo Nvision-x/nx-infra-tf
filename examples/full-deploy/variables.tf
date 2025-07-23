@@ -353,13 +353,6 @@ variable "postgres_ingress_rules" {
   default = []
 }
 
-variable "postgres_password" {
-  description = "The password for the database"
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
 variable "postgres_version" {
   description = "PostgreSQL version for the RDS instance"
   type        = string
@@ -450,13 +443,6 @@ variable "opensearch_ingress_rules" {
 variable "opensearch_instance_type" {
   description = "The type of instance for the OpenSearch cluster"
   type        = string
-}
-
-variable "opensearch_master_user_password" {
-  description = "The password for the OpenSearch admin"
-  type        = string
-  sensitive   = true
-  default     = null
 }
 
 variable "opensearch_security_group_name" {

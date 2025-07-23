@@ -59,7 +59,7 @@ module "postgresql" {
 
   db_name  = var.db_name
   username = var.username
-  password = var.postgres_password
+  password = jsondecode(data.aws_secretsmanager_secret_version.postgres[0].secret_string).password
   port     = 5432
 
   vpc_security_group_ids = [aws_security_group.db_sg[0].id]

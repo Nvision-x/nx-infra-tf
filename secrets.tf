@@ -1,0 +1,54 @@
+
+# ---------- RANDOM PASSWORDS ----------
+resource "random_password" "postgres" {
+  count   = var.enable_postgres ? 1 : 0
+  length  = 16
+  special = true
+}
+
+resource "random_password" "opensearch" {
+  count            = var.enable_opensearch ? 1 : 0
+  length           = 16
+  special          = true
+  override_special = "_!#$%^&()-=+?.,"
+}
+
+# ---------- SECRETS MANAGER: POSTGRES ----------
+resource "aws_secretsmanager_secret" "postgres_secret" {
+  count       = var.enable_postgres ? 1 : 0
+  name        = "postgres-admin-password"
+  description = "Admin password for PostgreSQL"
+}
+
+resource "aws_secretsmanager_secret_version" "postgres_secret_value" {
+  count         = var.enable_postgres ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.postgres_secret[0].id
+  secret_string = jsonencode({ password = random_password.postgres[0].result })
+}
+
+data "aws_secretsmanager_secret_version" "postgres" {
+  count      = var.enable_postgres ? 1 : 0
+  depends_on = [aws_secretsmanager_secret_version.postgres_secret_value]
+  secret_id  = aws_secretsmanager_secret.postgres_secret[0].id
+}
+
+# ---------- SECRETS MANAGER: OPENSEARCH ----------
+resource "aws_secretsmanager_secret" "opensearch_secret" {
+  count       = var.enable_opensearch ? 1 : 0
+  name        = "opensearch-admin-password"
+  description = "Admin password for OpenSearch"
+}
+
+resource "aws_secretsmanager_secret_version" "opensearch_secret_value" {
+  count         = var.enable_opensearch ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.opensearch_secret[0].id
+  secret_string = jsonencode({ password = random_password.opensearch[0].result })
+}
+
+data "aws_secretsmanager_secret_version" "opensearch" {
+  count      = var.enable_opensearch ? 1 : 0
+  depends_on = [aws_secretsmanager_secret_version.opensearch_secret_value]
+  secret_id  = aws_secretsmanager_secret.opensearch_secret[0].id
+}
+
+

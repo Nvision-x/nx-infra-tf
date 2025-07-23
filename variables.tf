@@ -249,12 +249,12 @@ variable "username" {
   type        = string
 }
 
-variable "postgres_password" {
-  description = "The password for the database"
-  type        = string
-  sensitive   = true
-  default     = null
-}
+# variable "postgres_password" {
+#   description = "The password for the database"
+#   type        = string
+#   sensitive   = true
+#   default     = null
+# }
 
 variable "allocated_storage" {
   description = "The size of the database storage in GB"
@@ -365,12 +365,12 @@ variable "master_user_name" {
   type        = string
 }
 
-variable "opensearch_master_user_password" {
-  description = "The password for the OpenSearch admin"
-  type        = string
-  sensitive   = true
-  default     = null
-}
+# variable "opensearch_master_user_password" {
+#   description = "The password for the OpenSearch admin"
+#   type        = string
+#   sensitive   = true
+#   default     = null
+# }
 
 variable "opensearch_instance_type" {
   description = "The type of instance for the OpenSearch cluster"

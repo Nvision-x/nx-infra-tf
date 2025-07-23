@@ -49,7 +49,7 @@ module "opensearch" {
 
     master_user_options = {
       master_user_name     = var.master_user_name
-      master_user_password = var.opensearch_master_user_password
+      master_user_password =jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
     }
   }
 
@@ -95,8 +95,8 @@ module "opensearch" {
   software_update_options = {
     auto_software_update_enabled = var.auto_software_update_enabled
   }
-  enable_access_policy  = true
-  create_access_policy  = false  # Because we're supplying access_policies directly
+  enable_access_policy = true
+  create_access_policy = false # Because we're supplying access_policies directly
 
   access_policies = jsonencode({
     Version = "2012-10-17"

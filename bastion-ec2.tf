@@ -41,6 +41,19 @@ resource "aws_key_pair" "bastion_ec2_key" {
   public_key = var.bastion_existing_pem == "" ? tls_private_key.bastion_ec2_key[0].public_key_openssh : file(var.bastion_existing_pem)
 }
 
+resource "aws_secretsmanager_secret" "bastion_private_key" {
+  count       = var.enable_bastion && var.bastion_existing_pem == "" ? 1 : 0
+  name        = "${var.bastion_key_name}-private-key"
+  description = "Private key for bastion host SSH access"
+}
+
+resource "aws_secretsmanager_secret_version" "bastion_private_key_value" {
+  count         = var.enable_bastion && var.bastion_existing_pem == "" ? 1 : 0
+  secret_id     = aws_secretsmanager_secret.bastion_private_key[0].id
+  secret_string = tls_private_key.bastion_ec2_key[0].private_key_pem
+}
+
+
 # EC2 Instance for Bastion
 resource "aws_instance" "bastion_ec2" {
   count                       = var.enable_bastion ? 1 : 0
@@ -84,7 +97,7 @@ resource "aws_eks_access_policy_association" "bastion_access" {
   principal_arn = var.bastion_eks_admin_role_arn
 
   access_scope {
-    type       = "cluster"
+    type = "cluster"
   }
 }
 
