@@ -1,3 +1,7 @@
+resource "aws_ebs_encryption_by_default" "this" {
+  enabled = true
+}
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "20.37.0"
