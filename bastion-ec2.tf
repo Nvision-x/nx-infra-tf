@@ -43,7 +43,7 @@ resource "aws_key_pair" "bastion_ec2_key" {
 
 resource "aws_secretsmanager_secret" "bastion_private_key" {
   count       = var.enable_bastion && var.bastion_existing_pem == "" ? 1 : 0
-  name        = "${var.bastion_key_name}-private-key"
+  name        = "${var.bastion_key_name}-private-key-${random_id.suffix.hex}"
   description = "Private key for bastion host SSH access"
 }
 
