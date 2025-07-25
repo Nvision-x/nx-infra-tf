@@ -5,7 +5,7 @@ resource "random_id" "suffix" {
 
 # ---------- RANDOM PASSWORDS ----------
 resource "random_password" "postgres" {
-  count   = var.enable_postgres ? 1 : 0
+  count            = var.enable_postgres ? 1 : 0
   length           = 16
   special          = true
   override_special = "_!#$%^&()-=+?.,"
