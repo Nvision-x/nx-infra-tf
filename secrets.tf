@@ -6,8 +6,13 @@ resource "random_id" "suffix" {
 # ---------- RANDOM PASSWORDS ----------
 resource "random_password" "postgres" {
   count   = var.enable_postgres ? 1 : 0
-  length  = 16
-  special = true
+  length           = 16
+  special          = true
+  override_special = "_!#$%^&()-=+?.,"
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
 }
 
 resource "random_password" "opensearch" {
