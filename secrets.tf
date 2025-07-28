@@ -70,6 +70,7 @@ data "aws_secretsmanager_secret_version" "opensearch" {
 }
 
 resource "kubectl_manifest" "postgres_secret" {
+  provider   = kubectl.eks
   depends_on = [data.aws_secretsmanager_secret_version.postgres]
   yaml_body  = <<YAML
 apiVersion: v1
@@ -84,6 +85,7 @@ YAML
 }
 
 resource "kubectl_manifest" "opensearch_secret" {
+  provider   = kubectl.eks
   depends_on = [data.aws_secretsmanager_secret_version.opensearch]
   yaml_body  = <<YAML
 apiVersion: v1
