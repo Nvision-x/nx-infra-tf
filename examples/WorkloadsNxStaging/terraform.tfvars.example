@@ -1,0 +1,153 @@
+# General / AWS
+region          = "us-east-2"
+vpc_id          = "vpc-xxxxxxxxxxxxxxxxx"
+private_subnets = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy", "subnet-zzzzzzzzzzzzzzzzz"]
+vpc_cidr_block  = "10.0.0.0/16"
+
+# EKS
+cluster_name                    = "nx-eks"
+cluster_version                 = "1.33"
+cluster_iam_role_arn            = "arn:aws:iam::xxxxxxxxxxxx:role/cluster-iam-role"
+cluster_endpoint_private_access = true
+cluster_endpoint_public_access  = true
+enable_irsa                     = false
+create_iam_role                 = false
+
+eks_managed_node_groups = {
+  node_group_1 = {
+    name            = "node-group-eks"
+    instance_types  = ["c7i.2xlarge"]
+    desired_size    = 1
+    min_size        = 1
+    max_size        = 10
+    create_iam_role = false
+    iam_role_arn    = "arn:aws:iam::xxxxxxxxxxxx:role/eks-node-group-1-role"
+  }
+  node_group_2 = {
+    name           = "node-group-default"
+    instance_types = ["c7i.2xlarge"]
+    desired_size   = 2
+    min_size       = 2
+    max_size       = 2
+    labels = {
+      app = "nx-redis"
+    }
+    create_iam_role = false
+    iam_role_arn    = "arn:aws:iam::xxxxxxxxxxxx:role/eks-node-group-2-role"
+  }
+}
+
+cluster_endpoint_public_access_cidrs = [
+  "X.X.X.X/32"
+]
+
+# Autoscaler & ALB Controller
+autoscaler_role_name          = "cluster-autoscaler-nx"
+autoscaler_service_account    = "cluster-autoscaler"
+lb_controller_role_name       = "aws-load-balancer-controller-nx"
+lb_controller_service_account = "aws-load-balancer-controller"
+lb_controller_role_arn        = ""
+cluster_autoscaler_role_arn   = ""
+
+# EC2 for NFS (disabled)
+enable_nfs            = false
+nfs_private_subnet_id = "subnet-xxxxxxxxxxxxxxxxx"
+instance_type         = "t3.xlarge"
+disk_size             = 100
+key_name              = "nfs-ec2-key"
+ami                   = "ami-xxxxxxxxxxxxxxxxx"
+ec2_name              = "nx-nfs"
+security_group_name   = "nx-nfs-sg"
+existing_pem          = ""
+nfs_ingress_rules = [
+  {
+    description = "Allow SSH access from VPC"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  },
+  {
+    description = "Allow NFS access within VPC"
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+]
+
+# EC2 for Bastion (disabled)
+enable_bastion              = false
+bastion_public_subnet_id    = "subnet-xxxxxxxxxxxxxxxxx"
+bastion_instance_type       = "t3.small"
+bastion_disk_size           = 8
+bastion_key_name            = "bastion-ec2-key"
+bastion_ami                 = "ami-xxxxxxxxxxxxxxxxx"
+bastion_ec2_name            = "nx-bastion"
+bastion_security_group_name = "nx-bastion-sg"
+bastion_existing_pem        = ""
+bastion_eks_admin_role_arn  = "arn:aws:iam::285358649488:role/bastion-eks-role-eks-jun23"
+bastion_profile_name        = "bastion-profile-eks-jun23"
+bastion_ingress_rules = [
+  {
+    description = "Allow SSH access from VPC"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+]
+
+# RDS PostgreSQL (disabled)
+enable_postgres             = false
+instance_class              = "db.t3.small"
+db_name                     = null
+username                    = "nvisnx"
+postgres_password           = ""
+allocated_storage           = 50
+db_identifier               = "nx-postgres"
+db_subnet_group_name        = "nx-subnet-group"
+subnet_group_description    = "nx-subnet-group-desc"
+db_security_group_name      = "nx-postgres-sg"
+postgres_version            = 16
+allow_major_version_upgrade = true
+apply_immediately           = true
+backup_window               = "05:36-06:06"
+copy_tags_to_snapshot       = true
+maintenance_window          = "tue:03:00-tue:03:30"
+manage_master_user_password = false
+parameter_group_name        = null
+skip_final_snapshot         = true
+postgres_ingress_rules = [
+  {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+]
+
+# OpenSearch (disabled)
+enable_opensearch               = false
+master_user_name                = "admin-user"
+opensearch_master_user_password = ""
+opensearch_instance_type        = "r7g.large.search"
+opensearch_security_group_name  = "nx-os-sg"
+domain_name                     = "nx-os"
+ebs_volume_size                 = 50
+engine_version                  = "Elasticsearch_7.10"
+enable_masternodes              = false
+number_of_master_nodes          = 0
+number_of_nodes                 = 3
+ebs_volume_type                 = "gp3"
+opensearch_subnet_ids = [
+  "subnet-xxxxxxxxxxxxxxxxx"
+]
+opensearch_ingress_rules = [
+  {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+]

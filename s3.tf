@@ -1,6 +1,6 @@
 # S3 Bucket for NvisionX production logs
 resource "aws_s3_bucket" "nvisionx_logs" {
-  bucket        = "nvisionx-logs-prod-${data.aws_caller_identity.current.account_id}"
+  bucket        = "nvisionx-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = false
 
   tags = {

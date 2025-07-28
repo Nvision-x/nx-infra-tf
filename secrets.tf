@@ -68,3 +68,32 @@ data "aws_secretsmanager_secret_version" "opensearch" {
   depends_on = [aws_secretsmanager_secret_version.opensearch_secret_value]
   secret_id  = aws_secretsmanager_secret.opensearch_secret[0].id
 }
+
+resource "kubectl_manifest" "postgres_secret" {
+  depends_on = [data.aws_secretsmanager_secret_version.postgres]
+  yaml_body  = <<YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-admin-secret
+  namespace: default
+type: Opaque
+stringData:
+  password: "${jsondecode(data.aws_secretsmanager_secret_version.postgres[0].secret_string)["password"]}"
+YAML
+}
+
+resource "kubectl_manifest" "opensearch_secret" {
+  depends_on = [data.aws_secretsmanager_secret_version.opensearch]
+  yaml_body  = <<YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: opensearch-admin-secret
+  namespace: default
+type: Opaque
+stringData:
+  password: "${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string)["password"]}"
+YAML
+}
+
