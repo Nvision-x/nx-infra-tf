@@ -4,7 +4,7 @@ resource "random_id" "s3_suffix" {
 }
 
 resource "aws_s3_bucket" "nvisionx_logs" {
-  bucket        = "nvisionx-logs-${random_id.suffix.hex}"
+  bucket        = "nvisionx-logs-${random_id.s3_suffix.hex}"
   force_destroy = var.s3_force_destroy
 
   tags = {
