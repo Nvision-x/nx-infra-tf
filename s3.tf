@@ -1,13 +1,18 @@
 # S3 Bucket for NvisionX production logs
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
 resource "aws_s3_bucket" "nvisionx_logs" {
-  bucket        = "nvisionx-logs-${data.aws_caller_identity.current.account_id}"
-  force_destroy = false
+  bucket        = "nvisionx-logs-${random_id.suffix.hex}"
+  force_destroy = var.s3_force_destroy
 
   tags = {
     Name    = "NvisionxLogsBucket"
     Purpose = "Store NvisionX logs from Fluentd"
   }
 }
+
 
 # Enable versioning (recommended for log retention/audit)
 resource "aws_s3_bucket_versioning" "nvisionx_logs" {

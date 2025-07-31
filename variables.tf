@@ -477,6 +477,11 @@ variable "bastion_profile_name" {
   default     = ""
 }
 
+variable "s3_force_destroy" {
+  description = "Whether to force destroy the S3 bucket and its contents on deletion"
+  type        = bool
+  default     = false
+}
 
 # --------------------- Tag -----------------------------
 
