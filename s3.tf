@@ -1,5 +1,5 @@
 # S3 Bucket for NvisionX production logs
-resource "random_id" "suffix" {
+resource "random_id" "s3_suffix" {
   byte_length = 4
 }
 
@@ -12,7 +12,6 @@ resource "aws_s3_bucket" "nvisionx_logs" {
     Purpose = "Store NvisionX logs from Fluentd"
   }
 }
-
 
 # Enable versioning (recommended for log retention/audit)
 resource "aws_s3_bucket_versioning" "nvisionx_logs" {
