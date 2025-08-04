@@ -1,30 +1,34 @@
-# S3 Bucket for NvisionX production logs
 resource "random_id" "s3_suffix" {
+  for_each    = toset(["minio", "companylogo", "csvfiles", "applogo"])
   byte_length = 4
 }
 
-resource "aws_s3_bucket" "nvisionx_logs" {
-  bucket        = "nvisionx-logs-${random_id.s3_suffix.hex}"
+resource "aws_s3_bucket" "nvisionx_buckets" {
+  for_each      = random_id.s3_suffix
+  bucket        = "nvisnx-${each.key}-${each.value.hex}"
   force_destroy = var.s3_force_destroy
 
   tags = {
-    Name    = "NvisionxLogsBucket"
-    Purpose = "Store NvisionX logs from Fluentd"
+    Name    = "nvisnx-${each.key}"
+    Purpose = "Bucket for ${each.key}"
+    Project = "NvisionX"
   }
 }
 
-# Enable versioning (recommended for log retention/audit)
-resource "aws_s3_bucket_versioning" "nvisionx_logs" {
-  bucket = aws_s3_bucket.nvisionx_logs.id
+resource "aws_s3_bucket_versioning" "nvisionx_buckets" {
+  for_each = aws_s3_bucket.nvisionx_buckets
+
+  bucket = each.value.id
 
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-# Enable server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "nvisionx_logs" {
-  bucket = aws_s3_bucket.nvisionx_logs.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "nvisionx_buckets" {
+  for_each = aws_s3_bucket.nvisionx_buckets
+
+  bucket = each.value.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -33,9 +37,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "nvisionx_logs" {
   }
 }
 
-# Block all public access
-resource "aws_s3_bucket_public_access_block" "nvisionx_logs" {
-  bucket = aws_s3_bucket.nvisionx_logs.id
+resource "aws_s3_bucket_public_access_block" "nvisionx_buckets" {
+  for_each = aws_s3_bucket.nvisionx_buckets
+
+  bucket = each.value.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -43,19 +48,19 @@ resource "aws_s3_bucket_public_access_block" "nvisionx_logs" {
   restrict_public_buckets = true
 }
 
-# Lifecycle policy - delete logs after 180 days (adjust as needed)
-resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_logs" {
-  bucket = aws_s3_bucket.nvisionx_logs.id
+resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
+  for_each = aws_s3_bucket.nvisionx_buckets
+
+  bucket = each.value.id
 
   rule {
-    id     = "expire-old-logs"
+    id     = "expire-old-objects"
     status = "Enabled"
 
-    filter {} # <- This makes it valid for all objects
+    filter {}
 
     expiration {
       days = 180
     }
   }
 }
-
