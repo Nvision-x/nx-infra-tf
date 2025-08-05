@@ -1,15 +1,15 @@
 resource "random_id" "s3_suffix" {
-  for_each    = toset(["minio", "companylogo", "csvfiles", "applogo"])
+  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo"])
   byte_length = 4
 }
 
 resource "aws_s3_bucket" "nvisionx_buckets" {
   for_each      = random_id.s3_suffix
-  bucket        = "nvisnx-${each.key}-${each.value.hex}"
+  bucket        = "nvisionx-${each.key}-${each.value.hex}"
   force_destroy = var.s3_force_destroy
 
   tags = {
-    Name    = "nvisnx-${each.key}"
+    Name    = "nvisionx-${each.key}"
     Purpose = "Bucket for ${each.key}"
     Project = "NvisionX"
   }
