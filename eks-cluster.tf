@@ -56,3 +56,13 @@ resource "aws_security_group_rule" "eks_nodes_all_vpc_ingress" {
   description       = "Allow all traffic from within VPC for node-to-node/pod-to-pod communication"
 }
 
+resource "aws_eks_access_policy_association" "access_policy" {
+  count         = var.eks_access_principal_arn != null ? 1 : 0
+  cluster_name  = module.eks.cluster_name
+  principal_arn = var.eks_access_principal_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  access_scope {
+    type = "cluster"
+  }
+}
+

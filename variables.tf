@@ -75,6 +75,14 @@ variable "eks_managed_node_groups" {
   default     = {}
 }
 
+# variables.tf
+variable "eks_access_principal_arn" {
+  description = "IAM Role or User ARN to grant access to the EKS cluster"
+  type        = string
+  default     = null
+}
+
+
 # ----------------------------- Bastion --------------------------------------
 
 variable "enable_bastion" {
@@ -214,6 +222,8 @@ variable "existing_pem" {
   type        = string
   default     = ""
 }
+
+
 
 # ----------------------------- PostgreSQL -------------------------------
 
