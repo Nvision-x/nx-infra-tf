@@ -45,3 +45,14 @@ resource "aws_security_group_rule" "eks_control_plane_ingress" {
   cidr_blocks       = [var.vpc_cidr_block]
 }
 
+# Allow all traffic within VPC for pod-to-pod & node-to-node communication
+resource "aws_security_group_rule" "eks_nodes_all_vpc_ingress" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "-1"
+  security_group_id = module.eks.node_security_group_id
+  cidr_blocks       = [var.vpc_cidr_block]
+  description       = "Allow all traffic from within VPC for node-to-node/pod-to-pod communication"
+}
+
