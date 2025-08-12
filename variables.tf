@@ -5,6 +5,18 @@ variable "region" {
   type        = string
 }
 
+variable "docker_hub_username" {
+  type        = string
+  default     = ""
+  description = "Docker Hub username"
+}
+
+variable "docker_hub_token" {
+  type        = string
+  description = "Docker Hub read-only access token"
+  sensitive   = true
+}
+
 # ----------------------------- Networking -------------------------------
 
 variable "vpc_id" {
@@ -492,6 +504,38 @@ variable "s3_force_destroy" {
   type        = bool
   default     = false
 }
+
+
+# --------------------- Ingress -------------------------
+
+variable "ingress_internet_facing" {
+  description = "Ingress scheme: internet-facing or internal"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.ingress_internet_facing == null || contains(["internet-facing", "internal"], var.ingress_internet_facing)
+    error_message = "Must be either null, 'internet-facing', or 'internal'."
+  }
+}
+
+variable "ingress_certificate_arn" {
+  description = "ACM cert ARN for ingress"
+  type        = string
+  default     = null
+}
+
+variable "ingress_wafv2_acl_arn" {
+  description = "WAFv2 Web ACL ARN to associate with ingress/ALB"
+  type        = string
+  default     = null
+}
+
+variable "ingress_host" {
+  description = "Hostname (FQDN) for ingress"
+  type        = string
+  default     = null
+}
+
 
 # --------------------- Tag -----------------------------
 

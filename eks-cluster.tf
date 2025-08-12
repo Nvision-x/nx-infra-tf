@@ -66,3 +66,113 @@ resource "aws_eks_access_policy_association" "access_policy" {
   }
 }
 
+locals {
+  pg_host     = var.enable_postgres ? module.postgresql[0].db_instance_address : null
+  pg_username = var.enable_postgres ? var.username : null
+
+  os_host     = var.enable_opensearch ? module.opensearch[0].domain_endpoint : null
+  os_username = var.enable_opensearch ? var.master_user_name : null
+}
+
+
+resource "kubernetes_config_map" "infra_config" {
+  metadata {
+    name      = "infra-config"
+    namespace = "default"
+  }
+
+  data = merge(
+    {
+      S3_BUCKET                     = aws_s3_bucket.nvisionx_buckets["logs"].bucket
+      MINIO_BUCKET                  = aws_s3_bucket.nvisionx_buckets["minio"].bucket
+      MINIO_LOGO_BUCKET             = aws_s3_bucket.nvisionx_buckets["companylogo"].bucket
+      MINIO_CSV_BUCKET              = aws_s3_bucket.nvisionx_buckets["csvfiles"].bucket
+      MINIO_APPLICATION_LOGO_BUCKET = aws_s3_bucket.nvisionx_buckets["applogo"].bucket
+    },
+
+    // Add PG & OS only when enabled
+    { for k, v in {
+      POSTGRES_HOST       = local.pg_host
+      POSTGRES_USERNAME   = local.pg_username
+      OPENSEARCH_HOST     = local.os_host
+      OPENSEARCH_USERNAME = local.os_username
+    } : k => v if v != null },
+
+    var.ingress_internet_facing != null ? { ingress-internet-facing = var.ingress_internet_facing } : {},
+    var.ingress_certificate_arn != null ? { ingress-certificate-arn = var.ingress_certificate_arn } : {},
+    var.ingress_wafv2_acl_arn != null ? { ingress-wafv2-acl-arn = var.ingress_wafv2_acl_arn } : {},
+    var.ingress_host != null ? { ingress-host = var.ingress_host } : {}
+  )
+}
+
+
+resource "kubernetes_secret" "infra_secrets" {
+  count = var.enable_postgres && var.enable_opensearch ? 1 : 0
+
+  metadata {
+    name      = "infra-secrets"
+    namespace = "default"
+  }
+  data = {
+    POSTGRES_PASSWORD   = jsondecode(data.aws_secretsmanager_secret_version.postgres[0].secret_string).password
+    OPENSEARCH_PASSWORD = jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
+  }
+  type = "Opaque"
+}
+
+locals {
+  docker_auth_b64 = base64encode("${trimspace(var.docker_hub_username)}:${trimspace(var.docker_hub_token)}")
+
+  # PLAIN JSON (not base64)
+  dockerconfigjson = jsonencode({
+    auths = {
+      "https://index.docker.io/v1/" = {
+        auth     = local.docker_auth_b64
+        username = trimspace(var.docker_hub_username) # optional
+        password = trimspace(var.docker_hub_token)    # optional
+      }
+    }
+  })
+}
+
+resource "kubernetes_secret" "docker_hub" {
+  count = length(trimspace(var.docker_hub_username)) > 0 && length(trimspace(var.docker_hub_token)) > 0 ? 1 : 0
+
+  metadata {
+    name      = "docker-hub-secret"
+    namespace = "default"
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  # DO NOT base64 here; provider will do it.
+  data = {
+    ".dockerconfigjson" = local.dockerconfigjson
+  }
+}
+
+# Requires terraform-provider-kubernetes >= 2.x
+resource "kubernetes_storage_class_v1" "gp3" {
+  metadata {
+    name = "gp3"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
+  }
+
+  storage_provisioner    = "ebs.csi.aws.com"
+  reclaim_policy         = "Delete"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+
+  parameters = {
+    type   = "gp3"
+    fsType = "ext4"
+  }
+}
+
+
+
+
+
+
