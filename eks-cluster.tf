@@ -101,7 +101,8 @@ resource "kubernetes_config_map" "infra_config" {
     var.ingress_internet_facing != null ? { ingress-internet-facing = var.ingress_internet_facing } : {},
     var.ingress_certificate_arn != null ? { ingress-certificate-arn = var.ingress_certificate_arn } : {},
     var.ingress_wafv2_acl_arn != null ? { ingress-wafv2-acl-arn = var.ingress_wafv2_acl_arn } : {},
-    var.ingress_host != null ? { ingress-host = var.ingress_host } : {}
+    var.ingress_host != null ? { ingress-host = var.ingress_host } : {},
+    { aws-region = var.region }
   )
 }
 
