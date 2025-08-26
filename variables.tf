@@ -94,6 +94,38 @@ variable "eks_access_principal_arn" {
   default     = null
 }
 
+// for oidc 
+
+variable "namespace" {
+  description = "Namespace where resources will be created"
+  type        = string
+  default     = "kube-system"
+}
+
+variable "autoscaler_role_name" {
+  description = "Name of IAM role for cluster autoscaler"
+  type        = string
+  default     = ""
+}
+
+variable "autoscaler_service_account" {
+  description = "Service account name for cluster autoscaler"
+  type        = string
+  default     = ""
+}
+
+variable "lb_controller_role_name" {
+  description = "Name of IAM role for load balancer controller"
+  type        = string
+  default     = ""
+}
+
+variable "lb_controller_service_account" {
+  description = "Service account name for load balancer controller"
+  type        = string
+  default     = ""
+}
+
 
 # ----------------------------- Bastion --------------------------------------
 
