@@ -108,6 +108,18 @@ module "opensearch" {
         }
         Action   = "es:*"
         Resource = "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
+      },
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = var.enable_opensearch ? aws_iam_role.opensearch_snapshot[0].arn : "*"
+        }
+        Action = [
+          "es:ESHttpGet",
+          "es:ESHttpPut",
+          "es:ESHttpPost"
+        ]
+        Resource = "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
     ]
   })
