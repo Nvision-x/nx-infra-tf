@@ -99,22 +99,41 @@ resource "null_resource" "register_snapshot_repository" {
       "echo 'Waiting for OpenSearch domain to be fully active...'",
       "sleep 120",
       "echo 'Registering snapshot repository...'",
+      "export OS_ENDPOINT='${module.opensearch[0].domain_endpoint}'",
+      "export OS_USER='${var.master_user_name}'",
+      "export OS_PASS='${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}'",
+      "export S3_BUCKET='${aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id}'",
+      "export ROLE_ARN='${aws_iam_role.opensearch_snapshot[0].arn}'",
+      "export REGION='${var.region}'",
       <<-EOT
-      RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X PUT "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
-        -u "${var.master_user_name}:${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}" \
+      echo "Using endpoint: $OS_ENDPOINT"
+      echo "Using bucket: $S3_BUCKET"
+      echo "Using role ARN: $ROLE_ARN"
+      echo "Using region: $REGION"
+      
+      RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X PUT "https://$OS_ENDPOINT/_snapshot/s3_repository" \
+        -u "$OS_USER:$OS_PASS" \
         -H 'Content-Type: application/json' \
-        -d '{
-          "type": "s3",
-          "settings": {
-            "bucket": "${aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id}",
-            "region": "${var.region}",
-            "role_arn": "${aws_iam_role.opensearch_snapshot[0].arn}"
+        -d "{
+          \"type\": \"s3\",
+          \"settings\": {
+            \"bucket\": \"$S3_BUCKET\",
+            \"region\": \"$REGION\",
+            \"role_arn\": \"$ROLE_ARN\"
           }
-        }' -k 2>/dev/null)
+        }" -k 2>&1)
+      
       HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
       BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
       echo "Registration response: $BODY"
       echo "HTTP Status: $HTTP_STATUS"
+      
+      if [ -z "$HTTP_STATUS" ]; then
+        echo "ERROR: Failed to get HTTP status. Full response:"
+        echo "$RESPONSE"
+        exit 1
+      fi
+      
       if [ "$HTTP_STATUS" -ne "200" ] && [ "$HTTP_STATUS" -ne "201" ]; then
         echo "ERROR: Failed to register snapshot repository. HTTP Status: $HTTP_STATUS"
         exit 1
@@ -123,12 +142,20 @@ resource "null_resource" "register_snapshot_repository" {
       ,
       "echo 'Verifying snapshot repository registration...'",
       <<-EOT
-      VERIFY_RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X GET "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
-        -u "${var.master_user_name}:${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}" -k 2>/dev/null)
+      VERIFY_RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X GET "https://$OS_ENDPOINT/_snapshot/s3_repository" \
+        -u "$OS_USER:$OS_PASS" -k 2>&1)
+      
       VERIFY_STATUS=$(echo "$VERIFY_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
       VERIFY_BODY=$(echo "$VERIFY_RESPONSE" | sed '/HTTP_STATUS:/d')
       echo "Verification response: $VERIFY_BODY"
       echo "HTTP Status: $VERIFY_STATUS"
+      
+      if [ -z "$VERIFY_STATUS" ]; then
+        echo "ERROR: Failed to get verification status. Full response:"
+        echo "$VERIFY_RESPONSE"
+        exit 1
+      fi
+      
       if [ "$VERIFY_STATUS" -ne "200" ]; then
         echo "WARNING: Repository might not be properly registered. HTTP Status: $VERIFY_STATUS"
       else
