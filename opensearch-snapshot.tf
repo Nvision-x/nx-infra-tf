@@ -98,8 +98,9 @@ resource "null_resource" "register_snapshot_repository" {
     inline = [
       "echo 'Waiting for OpenSearch domain to be fully active...'",
       "sleep 120",
+      "echo 'Registering snapshot repository...'",
       <<-EOT
-      curl -X PUT "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
+      RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X PUT "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
         -u "${var.master_user_name}:${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}" \
         -H 'Content-Type: application/json' \
         -d '{
@@ -109,13 +110,30 @@ resource "null_resource" "register_snapshot_repository" {
             "region": "${var.region}",
             "role_arn": "${aws_iam_role.opensearch_snapshot[0].arn}"
           }
-        }' -k
+        }' -k 2>/dev/null)
+      HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+      BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+      echo "Registration response: $BODY"
+      echo "HTTP Status: $HTTP_STATUS"
+      if [ "$HTTP_STATUS" -ne "200" ] && [ "$HTTP_STATUS" -ne "201" ]; then
+        echo "ERROR: Failed to register snapshot repository. HTTP Status: $HTTP_STATUS"
+        exit 1
+      fi
       EOT
       ,
       "echo 'Verifying snapshot repository registration...'",
       <<-EOT
-      curl -X GET "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
-        -u "${var.master_user_name}:${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}" -k
+      VERIFY_RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X GET "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository" \
+        -u "${var.master_user_name}:${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}" -k 2>/dev/null)
+      VERIFY_STATUS=$(echo "$VERIFY_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
+      VERIFY_BODY=$(echo "$VERIFY_RESPONSE" | sed '/HTTP_STATUS:/d')
+      echo "Verification response: $VERIFY_BODY"
+      echo "HTTP Status: $VERIFY_STATUS"
+      if [ "$VERIFY_STATUS" -ne "200" ]; then
+        echo "WARNING: Repository might not be properly registered. HTTP Status: $VERIFY_STATUS"
+      else
+        echo "SUCCESS: Repository registered successfully!"
+      fi
       EOT
     ]
   }
