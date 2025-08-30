@@ -96,72 +96,75 @@ resource "null_resource" "register_snapshot_repository" {
 
   provisioner "remote-exec" {
     inline = [
+      "echo 'Creating snapshot registration script...'",
+      "cat > /tmp/register_snapshot.sh << 'SCRIPT_EOF'",
+      "#!/bin/bash",
+      "set -e",
       "echo 'Waiting for OpenSearch domain to be fully active...'",
       "sleep 120",
+      "",
+      "OS_ENDPOINT='${module.opensearch[0].domain_endpoint}'",
+      "OS_USER='${var.master_user_name}'",
+      "OS_PASS='${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}'",
+      "S3_BUCKET='${aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id}'",
+      "ROLE_ARN='${aws_iam_role.opensearch_snapshot[0].arn}'",
+      "REGION='${var.region}'",
+      "",
+      "echo '==================================='",
+      "echo 'Snapshot Repository Configuration:'",
+      "echo '==================================='",
+      "echo \"Endpoint: $OS_ENDPOINT\"",
+      "echo \"Bucket: $S3_BUCKET\"",
+      "echo \"Role ARN: $ROLE_ARN\"",
+      "echo \"Region: $REGION\"",
+      "echo \"User: $OS_USER\"",
+      "echo '==================================='",
+      "",
       "echo 'Registering snapshot repository...'",
-      "export OS_ENDPOINT='${module.opensearch[0].domain_endpoint}'",
-      "export OS_USER='${var.master_user_name}'",
-      "export OS_PASS='${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}'",
-      "export S3_BUCKET='${aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id}'",
-      "export ROLE_ARN='${aws_iam_role.opensearch_snapshot[0].arn}'",
-      "export REGION='${var.region}'",
-      <<-EOT
-      echo "Using endpoint: $OS_ENDPOINT"
-      echo "Using bucket: $S3_BUCKET"
-      echo "Using role ARN: $ROLE_ARN"
-      echo "Using region: $REGION"
-      
-      RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X PUT "https://$OS_ENDPOINT/_snapshot/s3_repository" \
-        -u "$OS_USER:$OS_PASS" \
-        -H 'Content-Type: application/json' \
-        -d "{
-          \"type\": \"s3\",
-          \"settings\": {
-            \"bucket\": \"$S3_BUCKET\",
-            \"region\": \"$REGION\",
-            \"role_arn\": \"$ROLE_ARN\"
-          }
-        }" -k 2>&1)
-      
-      HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-      BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
-      echo "Registration response: $BODY"
-      echo "HTTP Status: $HTTP_STATUS"
-      
-      if [ -z "$HTTP_STATUS" ]; then
-        echo "ERROR: Failed to get HTTP status. Full response:"
-        echo "$RESPONSE"
-        exit 1
-      fi
-      
-      if [ "$HTTP_STATUS" -ne "200" ] && [ "$HTTP_STATUS" -ne "201" ]; then
-        echo "ERROR: Failed to register snapshot repository. HTTP Status: $HTTP_STATUS"
-        exit 1
-      fi
-      EOT
-      ,
-      "echo 'Verifying snapshot repository registration...'",
-      <<-EOT
-      VERIFY_RESPONSE=$(curl -s -w '\nHTTP_STATUS:%%{http_code}' -X GET "https://$OS_ENDPOINT/_snapshot/s3_repository" \
-        -u "$OS_USER:$OS_PASS" -k 2>&1)
-      
-      VERIFY_STATUS=$(echo "$VERIFY_RESPONSE" | grep "HTTP_STATUS:" | cut -d: -f2)
-      VERIFY_BODY=$(echo "$VERIFY_RESPONSE" | sed '/HTTP_STATUS:/d')
-      echo "Verification response: $VERIFY_BODY"
-      echo "HTTP Status: $VERIFY_STATUS"
-      
-      if [ -z "$VERIFY_STATUS" ]; then
-        echo "ERROR: Failed to get verification status. Full response:"
-        echo "$VERIFY_RESPONSE"
-        exit 1
-      fi
-      
-      if [ "$VERIFY_STATUS" -ne "200" ]; then
-        echo "WARNING: Repository might not be properly registered. HTTP Status: $VERIFY_STATUS"
-      else
-        echo "SUCCESS: Repository registered successfully!"
-      fi
-      EOT
+      "RESPONSE=$(curl -s -w '\\nHTTP_STATUS:%{http_code}' -X PUT \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
+      "  -u \"$OS_USER:$OS_PASS\" \\",
+      "  -H 'Content-Type: application/json' \\",
+      "  -d \"{",
+      "    \\\"type\\\": \\\"s3\\\",",
+      "    \\\"settings\\\": {",
+      "      \\\"bucket\\\": \\\"$S3_BUCKET\\\",",
+      "      \\\"region\\\": \\\"$REGION\\\",",
+      "      \\\"role_arn\\\": \\\"$ROLE_ARN\\\"",
+      "    }",
+      "  }\" -k 2>&1)",
+      "",
+      "HTTP_STATUS=$(echo \"$RESPONSE\" | grep 'HTTP_STATUS:' | cut -d: -f2)",
+      "BODY=$(echo \"$RESPONSE\" | sed '/HTTP_STATUS:/d')",
+      "",
+      "echo 'Registration Response:'",
+      "echo \"$BODY\" | python3 -m json.tool 2>/dev/null || echo \"$BODY\"",
+      "echo \"HTTP Status: $HTTP_STATUS\"",
+      "",
+      "if [ \"$HTTP_STATUS\" != \"200\" ] && [ \"$HTTP_STATUS\" != \"201\" ]; then",
+      "  echo 'ERROR: Failed to register snapshot repository!'",
+      "  echo 'Common issues:'",
+      "  echo '1. IAM role trust relationship not configured for OpenSearch'",
+      "  echo '2. IAM role missing S3 permissions'",
+      "  echo '3. OpenSearch domain not configured to pass IAM role'",
+      "  exit 1",
+      "fi",
+      "",
+      "echo 'Verifying repository...'",
+      "sleep 5",
+      "",
+      "VERIFY=$(curl -s -X GET \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
+      "  -u \"$OS_USER:$OS_PASS\" -k)",
+      "",
+      "echo 'Verification Result:'",
+      "echo \"$VERIFY\" | python3 -m json.tool 2>/dev/null || echo \"$VERIFY\"",
+      "",
+      "echo 'SUCCESS: Snapshot repository registered!'",
+      "SCRIPT_EOF",
+      "",
+      "chmod +x /tmp/register_snapshot.sh",
+      "echo 'Executing registration script...'",
+      "/tmp/register_snapshot.sh",
+      "rm -f /tmp/register_snapshot.sh"
     ]
   }
 }
