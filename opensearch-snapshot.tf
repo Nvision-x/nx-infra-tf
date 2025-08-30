@@ -124,7 +124,7 @@ resource "null_resource" "register_snapshot_repository" {
 # Output snapshot repository commands for manual execution
 output "opensearch_snapshot_commands" {
   description = "Commands to manage OpenSearch snapshots (run from bastion host)"
-  value       = var.enable_opensearch ? <<-EOT
+  value = var.enable_opensearch ? (<<-EOT
     # SSH to bastion host:
     ssh -i ${var.bastion_existing_pem} ubuntu@${var.enable_bastion ? aws_instance.bastion_ec2[0].public_ip : "<BASTION_IP>"}
     
@@ -139,5 +139,6 @@ output "opensearch_snapshot_commands" {
     # Restore a snapshot:
     curl -X POST "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository/<SNAPSHOT_NAME>/_restore" \
       -u "${var.master_user_name}:<PASSWORD>" -k
-  EOT : null
+EOT
+  ) : null
 }
