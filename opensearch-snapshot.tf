@@ -121,7 +121,7 @@ resource "null_resource" "register_snapshot_repository" {
       "echo '==================================='",
       "",
       "echo 'Registering snapshot repository...'",
-      "RESPONSE=$(curl -s -w '\\nHTTP_STATUS:%{http_code}' -X PUT \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
+      "RESPONSE=$(curl -s -w '\\nHTTP_STATUS:%%{http_code}' -X PUT \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
       "  -u \"$OS_USER:$OS_PASS\" \\",
       "  -H 'Content-Type: application/json' \\",
       "  -d \"{",
