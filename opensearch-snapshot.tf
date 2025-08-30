@@ -90,7 +90,7 @@ resource "null_resource" "register_snapshot_repository" {
   connection {
     type        = "ssh"
     user        = "ubuntu"
-    private_key = file(var.bastion_existing_pem)
+    private_key = var.bastion_existing_pem != "" ? file(var.bastion_existing_pem) : tls_private_key.bastion_ec2_key[0].private_key_pem
     host        = aws_instance.bastion_ec2[0].public_ip
   }
 
@@ -126,7 +126,7 @@ output "opensearch_snapshot_commands" {
   description = "Commands to manage OpenSearch snapshots (run from bastion host)"
   value = var.enable_opensearch ? (<<-EOT
     # SSH to bastion host:
-    ssh -i ${var.bastion_existing_pem} ubuntu@${var.enable_bastion ? aws_instance.bastion_ec2[0].public_ip : "<BASTION_IP>"}
+    ssh -i ${var.bastion_existing_pem != "" ? var.bastion_existing_pem : "<RETRIEVE_PRIVATE_KEY_FROM_SECRETS_MANAGER>"} ubuntu@${var.enable_bastion ? aws_instance.bastion_ec2[0].public_ip : "<BASTION_IP>"}
     
     # Create a snapshot:
     curl -X PUT "https://${module.opensearch[0].domain_endpoint}/_snapshot/s3_repository/snapshot_$(date +%Y%m%d_%H%M%S)?wait_for_completion=false" \
