@@ -1,6 +1,6 @@
 # Register snapshot repository via bastion host
 resource "null_resource" "register_snapshot_repository" {
-  count = var.enable_opensearch && var.enable_bastion ? 1 : 0
+  count = var.enable_post_deployment && var.enable_opensearch && var.enable_bastion ? 1 : 0
   
   depends_on = [
     module.opensearch[0],
@@ -21,6 +21,9 @@ resource "null_resource" "register_snapshot_repository" {
 
   provisioner "remote-exec" {
     inline = [
+      "# Update system packages",
+      "sudo yum update -y",
+      "echo 'System packages updated'",
       "# Install required tools",
       "if ! command -v kubectl &> /dev/null; then",
       "  curl -sLO \"https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl\"",
@@ -85,7 +88,7 @@ resource "null_resource" "register_snapshot_repository" {
 
 output "bastion_kubectl_setup" {
   description = "Kubectl configuration status for bastion host"
-  value = var.enable_bastion ? (<<-EOT
+  value = var.enable_post_deployment && var.enable_bastion ? (<<-EOT
     The bastion host has been configured with:
     - AWS CLI v2
     - kubectl (configured for EKS cluster: ${module.eks.cluster_name})
@@ -101,7 +104,7 @@ EOT
 # Output snapshot repository commands for manual execution
 output "opensearch_snapshot_commands" {
   description = "Commands to manage OpenSearch snapshots (run from bastion host)"
-  value = var.enable_opensearch ? (<<-EOT
+  value = var.enable_post_deployment && var.enable_opensearch ? (<<-EOT
     # SSH to bastion host:
     ssh -i ${var.bastion_existing_pem != "" ? var.bastion_existing_pem : "<RETRIEVE_PRIVATE_KEY_FROM_SECRETS_MANAGER>"} ${var.bastion_user_name}@${var.enable_bastion ? aws_instance.bastion_ec2[0].public_ip : "<BASTION_IP>"}
     

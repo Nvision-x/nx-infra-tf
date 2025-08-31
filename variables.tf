@@ -135,6 +135,12 @@ variable "enable_bastion" {
   default     = false
 }
 
+variable "enable_post_deployment" {
+  description = "Flag to enable post-deployment setup (snapshot repository registration, kubectl configuration, etc.)"
+  type        = bool
+  default     = false
+}
+
 variable "bastion_ingress_rules" {
   description = "List of ingress rules for Bastion EC2 security group"
   type = list(object({
