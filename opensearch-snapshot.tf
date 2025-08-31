@@ -60,6 +60,39 @@ resource "aws_iam_service_linked_role" "opensearch" {
   aws_service_name = "es.amazonaws.com"
 }
 
+# Allow OpenSearch to pass the snapshot role
+resource "aws_opensearch_domain_policy" "snapshot_policy" {
+  count       = var.enable_opensearch ? 1 : 0
+  domain_name = module.opensearch[0].domain_name
+
+  access_policies = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"
+        }
+        Action = [
+          "es:*"
+        ]
+        Resource = "${module.opensearch[0].domain_arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_iam_role.opensearch_snapshot[0].arn
+        }
+        Action = [
+          "es:ESHttpPost",
+          "es:ESHttpPut"
+        ]
+        Resource = "${module.opensearch[0].domain_arn}/*"
+      }
+    ]
+  })
+}
+
 # Output for snapshot repository registration
 output "opensearch_snapshot_role_arn" {
   description = "ARN of the IAM role for OpenSearch snapshots"
@@ -120,7 +153,26 @@ resource "null_resource" "register_snapshot_repository" {
       "echo \"User: $OS_USER\"",
       "echo '==================================='",
       "echo ' '",
-      "echo 'Registering snapshot repository...'",
+      "echo 'Step 1: Mapping IAM role to OpenSearch manage_snapshots role...'",
+      "ROLE_MAPPING_RESPONSE=$(curl -s -w '\\nHTTP_STATUS:%%{http_code}' -X PUT \"https://$OS_ENDPOINT/_plugins/_security/api/rolesmapping/manage_snapshots\" \\",
+      "  -u \"$OS_USER:$OS_PASS\" \\",
+      "  -H 'Content-Type: application/json' \\",
+      "  -d \"{",
+      "    \\\"backend_roles\\\": [\\\"$ROLE_ARN\\\"],",
+      "    \\\"hosts\\\": [],",
+      "    \\\"users\\\": []",
+      "  }\" -k 2>&1)",
+      "echo ' '",
+      "ROLE_MAP_STATUS=$(echo \"$ROLE_MAPPING_RESPONSE\" | grep 'HTTP_STATUS:' | cut -d: -f2)",
+      "ROLE_MAP_BODY=$(echo \"$ROLE_MAPPING_RESPONSE\" | sed '/HTTP_STATUS:/d')",
+      "echo \"Role Mapping Response: $ROLE_MAP_BODY\"",
+      "echo \"HTTP Status: $ROLE_MAP_STATUS\"",
+      "echo ' '",
+      "if [ \"$ROLE_MAP_STATUS\" != \"200\" ] && [ \"$ROLE_MAP_STATUS\" != \"201\" ]; then",
+      "  echo 'WARNING: Failed to map IAM role to manage_snapshots role'",
+      "fi",
+      "echo ' '",
+      "echo 'Step 2: Registering snapshot repository...'",
       "RESPONSE=$(curl -s -w '\\nHTTP_STATUS:%%{http_code}' -X PUT \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
       "  -u \"$OS_USER:$OS_PASS\" \\",
       "  -H 'Content-Type: application/json' \\",
@@ -149,7 +201,7 @@ resource "null_resource" "register_snapshot_repository" {
       "  exit 1",
       "fi",
       "echo ' '",
-      "echo 'Verifying repository...'",
+      "echo 'Step 3: Verifying repository...'",
       "sleep 5",
       "echo ' '",
       "VERIFY=$(curl -s -X GET \"https://$OS_ENDPOINT/_snapshot/s3_repository\" \\",
