@@ -63,7 +63,7 @@ resource "aws_iam_service_linked_role" "opensearch" {
 # Allow OpenSearch to pass the snapshot role
 resource "aws_opensearch_domain_policy" "snapshot_policy" {
   count       = var.enable_opensearch ? 1 : 0
-  domain_name = module.opensearch[0].domain_name
+  domain_name = var.domain_name
 
   access_policies = jsonencode({
     Version = "2012-10-17"
@@ -76,7 +76,7 @@ resource "aws_opensearch_domain_policy" "snapshot_policy" {
         Action = [
           "es:*"
         ]
-        Resource = "${module.opensearch[0].domain_arn}/*"
+        Resource = "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       },
       {
         Effect = "Allow"
@@ -87,7 +87,7 @@ resource "aws_opensearch_domain_policy" "snapshot_policy" {
           "es:ESHttpPost",
           "es:ESHttpPut"
         ]
-        Resource = "${module.opensearch[0].domain_arn}/*"
+        Resource = "arn:aws:es:${var.region}:${data.aws_caller_identity.current.account_id}:domain/${var.domain_name}/*"
       }
     ]
   })
