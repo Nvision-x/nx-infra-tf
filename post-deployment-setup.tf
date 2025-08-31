@@ -83,17 +83,6 @@ resource "null_resource" "register_snapshot_repository" {
   }
 }
 
-# Output for snapshot repository registration
-output "opensearch_snapshot_role_arn" {
-  description = "ARN of the IAM role for OpenSearch snapshots"
-  value       = var.enable_opensearch ? (var.snapshot_role_arn != "" ? var.snapshot_role_arn : aws_iam_role.opensearch_snapshot[0].arn) : null
-}
-
-output "opensearch_snapshot_bucket" {
-  description = "S3 bucket name for OpenSearch snapshots"
-  value       = aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id
-}
-
 output "bastion_kubectl_setup" {
   description = "Kubectl configuration status for bastion host"
   value = var.enable_bastion ? (<<-EOT
