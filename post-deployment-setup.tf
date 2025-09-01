@@ -118,11 +118,11 @@ resource "null_resource" "register_snapshot_repository" {
       "{\"type\": \"s3\", \"settings\": {\"bucket\": \"$S3_BUCKET\", \"region\": \"$REGION\", \"role_arn\": \"$SNAPSHOT_ROLE_ARN\"}}",
       "EOF",
       "awscurl --service es --region $REGION -XPUT -H 'Content-Type: application/json' --data @/tmp/repo.json \"https://$OS_ENDPOINT/_snapshot/${var.snapshot_repository_name}\" 2>&1",
-      # "rm -f /tmp/repo.json",
+      "rm -f /tmp/repo.json",
       "SCRIPT_EOF",
       "chmod +x /tmp/register_snapshot.sh",
       "/tmp/register_snapshot.sh",
-      # "rm -f /tmp/register_snapshot.sh"
+      "rm -f /tmp/register_snapshot.sh"
     ]
   }
 }
