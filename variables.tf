@@ -558,7 +558,7 @@ variable "snapshot_role_arn" {
 variable "snapshot_repository_name" {
   description = "Name of the OpenSearch snapshot repository"
   type        = string
-  default     = "s3_repository"
+  default     = "manual-snapshots"
 }
 
 
