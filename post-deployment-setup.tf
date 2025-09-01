@@ -112,7 +112,7 @@ resource "null_resource" "register_snapshot_repository" {
       "curl -s -X PUT \"https://$OS_ENDPOINT/_plugins/_security/api/rolesmapping/manage_snapshots\" \\",
       "  -u \"$OS_USER:$OS_PASS\" \\",
       "  -H 'Content-Type: application/json' \\",
-      "  -d '{\"backend_roles\": [\"$BASTION_ROLE_ARN\", \"$SNAPSHOT_ROLE_ARN\"], \"hosts\": [], \"users\": []}' -k &>/dev/null",
+      "  -d '{\\\"backend_roles\\\": [\\\"$BASTION_ROLE_ARN\\\", \\\"$SNAPSHOT_ROLE_ARN\\\"], \\\"hosts\\\": [], \\\"users\\\": []}' -k &>/dev/null",
       "# Create repository config",
       "cat > /tmp/repo.json << EOF",
       "{\"type\": \"s3\", \"settings\": {\"bucket\": \"$S3_BUCKET\", \"region\": \"$REGION\", \"role_arn\": \"$SNAPSHOT_ROLE_ARN\"}}",
