@@ -135,6 +135,12 @@ variable "enable_bastion" {
   default     = false
 }
 
+variable "enable_post_deployment" {
+  description = "Flag to enable post-deployment setup (snapshot repository registration, kubectl configuration, etc.)"
+  type        = bool
+  default     = false
+}
+
 variable "bastion_ingress_rules" {
   description = "List of ingress rules for Bastion EC2 security group"
   type = list(object({
@@ -531,10 +537,28 @@ variable "bastion_profile_name" {
   default     = ""
 }
 
+variable "bastion_user_name" {
+  description = "SSH user name for the bastion host (e.g., ec2-user for Amazon Linux, ubuntu for Ubuntu)"
+  type        = string
+  default     = "ec2-user"
+}
+
 variable "s3_force_destroy" {
   description = "Whether to force destroy the S3 bucket and its contents on deletion"
   type        = bool
   default     = false
+}
+
+variable "snapshot_role_arn" {
+  description = "ARN of the IAM role for OpenSearch snapshots (if created outside this module)"
+  type        = string
+  default     = ""
+}
+
+variable "snapshot_repository_name" {
+  description = "Name of the OpenSearch snapshot repository"
+  type        = string
+  default     = "manual-snapshots"
 }
 
 
