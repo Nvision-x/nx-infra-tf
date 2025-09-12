@@ -39,7 +39,9 @@ resource "aws_secretsmanager_secret" "postgres_secret" {
 resource "aws_secretsmanager_secret_version" "postgres_secret_value" {
   count         = var.enable_postgres ? 1 : 0
   secret_id     = aws_secretsmanager_secret.postgres_secret[0].id
-  secret_string = jsonencode({ password = random_password.postgres[0].result })
+  secret_string = jsonencode({ 
+    password = var.existing_postgres_password != "" ? var.existing_postgres_password : random_password.postgres[0].result 
+  })
 }
 
 data "aws_secretsmanager_secret_version" "postgres" {
@@ -60,7 +62,9 @@ resource "aws_secretsmanager_secret" "opensearch_secret" {
 resource "aws_secretsmanager_secret_version" "opensearch_secret_value" {
   count         = var.enable_opensearch ? 1 : 0
   secret_id     = aws_secretsmanager_secret.opensearch_secret[0].id
-  secret_string = jsonencode({ password = random_password.opensearch[0].result })
+  secret_string = jsonencode({ 
+    password = var.existing_opensearch_password != "" ? var.existing_opensearch_password : random_password.opensearch[0].result 
+  })
 }
 
 data "aws_secretsmanager_secret_version" "opensearch" {

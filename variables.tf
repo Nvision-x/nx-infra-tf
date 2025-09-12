@@ -309,12 +309,13 @@ variable "username" {
   type        = string
 }
 
-# variable "postgres_password" {
-#   description = "The password for the database"
-#   type        = string
-#   sensitive   = true
-#   default     = null
-# }
+# Variable for existing PostgreSQL password (optional)
+variable "existing_postgres_password" {
+  description = "Existing PostgreSQL password to use instead of generating a new one"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
 
 variable "allocated_storage" {
   description = "The size of the database storage in GB"
@@ -425,12 +426,13 @@ variable "master_user_name" {
   type        = string
 }
 
-# variable "opensearch_master_user_password" {
-#   description = "The password for the OpenSearch admin"
-#   type        = string
-#   sensitive   = true
-#   default     = null
-# }
+# Variable for existing OpenSearch password (optional)
+variable "existing_opensearch_password" {
+  description = "Existing OpenSearch password to use instead of generating a new one"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
 
 variable "opensearch_instance_type" {
   description = "The type of instance for the OpenSearch cluster"

@@ -1,6 +1,6 @@
 # Wait for bastion to be ready and verify connectivity
 resource "null_resource" "bastion_ready_check" {
-  count = var.enable_bastion ? 1 : 0
+  count = var.enable_bastion && var.enable_post_deployment ? 1 : 0
   
   depends_on = [
     aws_instance.bastion_ec2[0],
@@ -28,14 +28,13 @@ resource "null_resource" "bastion_ready_check" {
 
 # Register snapshot repository via bastion host
 resource "null_resource" "register_snapshot_repository" {
-  count = var.enable_opensearch && var.enable_bastion ? 1 : 0
+  count = var.enable_opensearch && var.enable_bastion && var.enable_post_deployment ? 1 : 0
   
   depends_on = [
     module.opensearch[0],
     aws_instance.bastion_ec2[0],
     aws_eks_access_entry.bastion_access[0],
-    aws_eks_access_policy_association.bastion_access[0],
-    null_resource.bastion_ready_check[0]
+    aws_eks_access_policy_association.bastion_access[0]
   ]
 
   triggers = {
@@ -104,7 +103,7 @@ resource "null_resource" "register_snapshot_repository" {
       "OS_ENDPOINT='${module.opensearch[0].domain_endpoint}'",
       "OS_USER='${var.master_user_name}'",
       "OS_PASS='${jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password}'",
-      "S3_BUCKET='${aws_s3_bucket.nvisionx_buckets["nvisionx-os-backup"].id}'",
+      "S3_BUCKET='${aws_s3_bucket.nvisionx_buckets["os-backup"].id}'",
       "SNAPSHOT_ROLE_ARN='${var.snapshot_role_arn}'",
       "BASTION_ROLE_ARN='${var.bastion_eks_admin_role_arn}'",
       "REGION='${var.region}'",

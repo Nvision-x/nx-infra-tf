@@ -9,6 +9,7 @@ module "nx" {
   vpc_id          = var.vpc_id
   private_subnets = var.private_subnets
   tags            = var.tags
+  docker_hub_token = var.docker_hub_token
 
   # --------------------- EKS ---------------------
 

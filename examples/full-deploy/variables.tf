@@ -22,6 +22,12 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "docker_hub_token" {
+  description = "Docker Hub access token"
+  type        = string
+  sensitive   = true
+}
+
 # ----------------------------- EKS --------------------------------------
 
 variable "autoscaler_role_name" {
