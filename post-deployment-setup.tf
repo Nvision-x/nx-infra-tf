@@ -1,7 +1,7 @@
 # Wait for bastion to be ready and verify connectivity
 resource "null_resource" "bastion_ready_check" {
   count = var.enable_bastion && var.enable_post_deployment ? 1 : 0
-  
+
   depends_on = [
     aws_instance.bastion_ec2[0],
     aws_eks_access_entry.bastion_access[0],
@@ -29,7 +29,7 @@ resource "null_resource" "bastion_ready_check" {
 # Register snapshot repository via bastion host
 resource "null_resource" "register_snapshot_repository" {
   count = var.enable_opensearch && var.enable_bastion && var.enable_post_deployment ? 1 : 0
-  
+
   depends_on = [
     module.opensearch[0],
     aws_instance.bastion_ec2[0],

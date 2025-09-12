@@ -114,6 +114,7 @@ resource "kubernetes_config_map" "infra_config" {
     var.ingress_certificate_arn != null ? { ingress-certificate-arn = var.ingress_certificate_arn } : {},
     var.ingress_wafv2_acl_arn != null ? { ingress-wafv2-acl-arn = var.ingress_wafv2_acl_arn } : {},
     var.ingress_host != null ? { ingress-host = var.ingress_host } : {},
+    { snapshot-repository-name = var.snapshot_repository_name },
     { aws-region = var.region }
   )
 }
