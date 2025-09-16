@@ -46,7 +46,7 @@ resource "aws_secretsmanager_secret_version" "postgres_secret_value" {
 
 data "aws_secretsmanager_secret_version" "postgres" {
   count      = var.enable_postgres ? 1 : 0
-  depends_on = [aws_secretsmanager_secret_version.postgres_secret_value]
+  depends_on = [aws_secretsmanager_secret_version.postgres_secret_value[0]]
   secret_id  = aws_secretsmanager_secret.postgres_secret[0].id
 }
 
@@ -69,7 +69,7 @@ resource "aws_secretsmanager_secret_version" "opensearch_secret_value" {
 
 data "aws_secretsmanager_secret_version" "opensearch" {
   count      = var.enable_opensearch ? 1 : 0
-  depends_on = [aws_secretsmanager_secret_version.opensearch_secret_value]
+  depends_on = [aws_secretsmanager_secret_version.opensearch_secret_value[0]]
   secret_id  = aws_secretsmanager_secret.opensearch_secret[0].id
 }
 
