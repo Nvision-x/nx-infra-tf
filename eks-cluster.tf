@@ -20,6 +20,8 @@ module "eks" {
   iam_role_arn                             = var.cluster_iam_role_arn
   eks_managed_node_groups                  = var.eks_managed_node_groups
   enable_cluster_creator_admin_permissions = true
+  create_cluster_security_group            = false
+  cluster_security_group_id                = aws_security_group.eks_cluster.id
 
   cluster_addons = {
     coredns                         = {}
@@ -36,13 +38,21 @@ module "eks" {
   tags = var.tags
 }
 
+resource "aws_security_group" "eks_cluster" {
+  name        = "${var.cluster_name}-cluster-sg"
+  description = "EKS control-plane SG"
+  vpc_id      = var.vpc_id
+  tags        = var.tags
+}
+
 resource "aws_security_group_rule" "eks_control_plane_ingress" {
   type              = "ingress"
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  security_group_id = module.eks.cluster_security_group_id # EKS control plane security group
+  security_group_id = aws_security_group.eks_cluster.id
   cidr_blocks       = [var.vpc_cidr_block]
+  description       = "Allow API (443) from VPC"
 }
 
 # Allow all traffic within VPC for pod-to-pod & node-to-node communication
