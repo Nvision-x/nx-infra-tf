@@ -31,6 +31,9 @@ output "bastion_private_key_pem" {
   sensitive   = true
 }
 
+output "eks_control_plane_ingress_rule_id" {
+  value = aws_security_group_rule.eks_control_plane_ingress.id
+}
 
 output "oidc_provider_url" {
   description = "The OpenID Connect identity provider (issuer URL)"
