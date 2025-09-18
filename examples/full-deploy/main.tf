@@ -4,12 +4,14 @@ module "nx" {
 
   # --------------------- Global/Provider ---------------------
 
-  region           = var.region
-  vpc_cidr_block   = var.vpc_cidr_block
-  vpc_id           = var.vpc_id
-  private_subnets  = var.private_subnets
-  tags             = var.tags
-  docker_hub_token = var.docker_hub_token
+  region             = var.region
+  vpc_cidr_block     = var.vpc_cidr_block
+  vpc_id             = var.vpc_id
+  private_subnets    = var.private_subnets
+  tags               = var.tags
+  docker_hub_token   = var.docker_hub_token
+  github_cr_username = var.github_cr_username
+  github_cr_token    = var.github_cr_token
 
   # --------------------- EKS ---------------------
 

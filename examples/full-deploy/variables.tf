@@ -28,6 +28,19 @@ variable "docker_hub_token" {
   sensitive   = true
 }
 
+variable "github_cr_username" {
+  description = "GitHub Container Registry username"
+  type        = string
+  default     = ""
+}
+
+variable "github_cr_token" {
+  description = "GitHub Container Registry personal access token"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 # ----------------------------- EKS --------------------------------------
 
 variable "autoscaler_role_name" {

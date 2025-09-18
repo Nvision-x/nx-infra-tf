@@ -17,6 +17,19 @@ variable "docker_hub_token" {
   sensitive   = true
 }
 
+variable "github_cr_username" {
+  type        = string
+  default     = ""
+  description = "GitHub Container Registry username"
+}
+
+variable "github_cr_token" {
+  type        = string
+  default     = ""
+  description = "GitHub Container Registry personal access token"
+  sensitive   = true
+}
+
 # ----------------------------- Networking -------------------------------
 
 variable "vpc_id" {
