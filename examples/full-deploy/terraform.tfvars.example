@@ -4,6 +4,11 @@ vpc_id          = "vpc-xxxxxxxxxxxxxxxxx"
 private_subnets = ["subnet-xxxxxxxxxxxxxxxxx", "subnet-yyyyyyyyyyyyyyyyy", "subnet-zzzzzzzzzzzzzzzzz"]
 vpc_cidr_block  = "10.0.0.0/16"
 
+# Container Registry Secrets
+docker_hub_token   = "your_docker_hub_token_here"
+github_cr_username = ""  # Optional: GitHub username for Container Registry
+github_cr_token    = ""  # Optional: GitHub personal access token for Container Registry
+
 # EKS
 cluster_name                    = "nx-eks"
 cluster_version                 = "1.33"

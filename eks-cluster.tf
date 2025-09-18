@@ -136,7 +136,8 @@ resource "kubernetes_secret" "infra_secrets" {
 }
 
 locals {
-  docker_auth_b64 = base64encode("${trimspace(var.docker_hub_username)}:${trimspace(var.docker_hub_token)}")
+  docker_auth_b64    = base64encode("${trimspace(var.docker_hub_username)}:${trimspace(var.docker_hub_token)}")
+  github_cr_auth_b64 = base64encode("${trimspace(var.github_cr_username)}:${trimspace(var.github_cr_token)}")
 
   # PLAIN JSON (not base64)
   dockerconfigjson = jsonencode({
@@ -145,6 +146,17 @@ locals {
         auth     = local.docker_auth_b64
         username = trimspace(var.docker_hub_username) # optional
         password = trimspace(var.docker_hub_token)    # optional
+      }
+    }
+  })
+
+  # PLAIN JSON for GitHub Container Registry (not base64)
+  githubcrconfigjson = jsonencode({
+    auths = {
+      "ghcr.io" = {
+        auth     = local.github_cr_auth_b64
+        username = trimspace(var.github_cr_username) # optional
+        password = trimspace(var.github_cr_token)    # optional
       }
     }
   })
@@ -163,6 +175,22 @@ resource "kubernetes_secret" "docker_hub" {
   # DO NOT base64 here; provider will do it.
   data = {
     ".dockerconfigjson" = local.dockerconfigjson
+  }
+}
+
+resource "kubernetes_secret" "github_cr" {
+  count = length(trimspace(var.github_cr_username)) > 0 && length(trimspace(var.github_cr_token)) > 0 ? 1 : 0
+
+  metadata {
+    name      = "github-cr-secret"
+    namespace = "default"
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  # DO NOT base64 here; provider will do it.
+  data = {
+    ".dockerconfigjson" = local.githubcrconfigjson
   }
 }
 
