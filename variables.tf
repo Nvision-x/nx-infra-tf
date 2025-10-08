@@ -88,6 +88,12 @@ variable "enable_irsa" {
   default     = false
 }
 
+variable "ebs_csi_irsa_role_arn" {
+  type        = string
+  description = "IAM role ARN for EBS CSI controller service account (IRSA)"
+  default     = ""
+}
+
 variable "create_iam_role" {
   description = "Whether to create a new IAM role for the EKS cluster. Set to false if IAM is managed externally."
   type        = bool
