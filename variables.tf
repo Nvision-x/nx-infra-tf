@@ -91,6 +91,7 @@ variable "enable_irsa" {
 variable "ebs_csi_irsa_role_arn" {
   type        = string
   description = "IAM role ARN for EBS CSI controller service account (IRSA)"
+  default     = ""
 }
 
 variable "create_iam_role" {
