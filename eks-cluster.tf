@@ -27,7 +27,7 @@ module "eks" {
     kube-proxy             = {}
     vpc-cni                = {}
     aws-ebs-csi-driver = {
-      service_account_role_arn = var.ebs_csi_irsa_role_arn
+      service_account_role_arn = var.enable_irsa ? aws_iam_role.ebs_csi_irsa[0].arn : var.ebs_csi_irsa_role_arn
     }
     amazon-cloudwatch-observability = {}
   }
