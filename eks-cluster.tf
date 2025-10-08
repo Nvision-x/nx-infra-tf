@@ -22,11 +22,13 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   cluster_addons = {
-    coredns                         = {}
-    eks-pod-identity-agent          = {}
-    kube-proxy                      = {}
-    vpc-cni                         = {}
-    aws-ebs-csi-driver              = {}
+    coredns                = {}
+    eks-pod-identity-agent = {}
+    kube-proxy             = {}
+    vpc-cni                = {}
+    aws-ebs-csi-driver = {
+      service_account_role_arn = var.ebs_csi_irsa_role_arn
+    }
     amazon-cloudwatch-observability = {}
   }
   eks_managed_node_group_defaults = {
