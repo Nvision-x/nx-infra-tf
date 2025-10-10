@@ -22,12 +22,24 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   cluster_addons = {
-    coredns                         = {}
-    eks-pod-identity-agent          = {}
-    kube-proxy                      = {}
-    vpc-cni                         = {}
-    aws-ebs-csi-driver              = {}
-    amazon-cloudwatch-observability = {}
+    coredns = {
+      addon_version = "v1.12.1-eksbuild.2"
+    }
+    eks-pod-identity-agent = {
+      addon_version = "v1.3.8-eksbuild.2"
+    }
+    kube-proxy = {
+      addon_version = "v1.33.0-eksbuild.2"
+    }
+    vpc-cni = {
+      addon_version = "v1.19.5-eksbuild.1"
+    }
+    aws-ebs-csi-driver = {
+      addon_version = "v1.48.0-eksbuild.2"
+    }
+    amazon-cloudwatch-observability = {
+      addon_version = "v4.4.0-eksbuild.1"
+    }
   }
   eks_managed_node_group_defaults = {
     disk_size       = 50
