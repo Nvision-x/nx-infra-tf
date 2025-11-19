@@ -38,4 +38,15 @@ output "eks_control_plane_ingress_rule_id" {
 output "oidc_provider_url" {
   description = "The OpenID Connect identity provider (issuer URL)"
   value       = try("https://${module.eks.oidc_provider}", null)
-} 
+}
+
+output "bedrock_service_accounts" {
+  description = "List of created Kubernetes ServiceAccounts for Bedrock access"
+  value = var.enable_bedrock_service_accounts ? {
+    for k, v in kubernetes_service_account.bedrock : k => {
+      name      = v.metadata[0].name
+      namespace = v.metadata[0].namespace
+      role_arn  = v.metadata[0].annotations["eks.amazonaws.com/role-arn"]
+    }
+  } : {}
+}

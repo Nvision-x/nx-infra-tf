@@ -624,3 +624,29 @@ variable "tags" {
   }
 }
 
+# --------------------- Bedrock Service Accounts -----------------------------
+
+variable "enable_bedrock_service_accounts" {
+  description = "Enable creation of Kubernetes ServiceAccounts for Bedrock access"
+  type        = bool
+  default     = false
+}
+
+variable "bedrock_service_accounts" {
+  description = "List of namespace:serviceaccount pairs to create for Bedrock access. Example: ['default:bedrock-app', 'production:ai-service']"
+  type        = list(string)
+  default     = []
+}
+
+variable "bedrock_irsa_role_arn" {
+  description = "IAM Role ARN for Bedrock IRSA (created by nx-iam module)"
+  type        = string
+  default     = ""
+}
+
+variable "create_bedrock_namespaces" {
+  description = "Whether to automatically create namespaces for Bedrock service accounts if they don't exist"
+  type        = bool
+  default     = false
+}
+
