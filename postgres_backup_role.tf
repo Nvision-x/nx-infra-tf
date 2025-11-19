@@ -1,8 +1,9 @@
-# Trust policy document for Postgres Backup (RDS service principal)
-# Only created when IRSA is NOT enabled (IAM module handles it when IRSA is enabled)
+# Trust policy document for Postgres Backup
+# Created in infra module when IRSA is enabled
 data "aws_iam_policy_document" "postgres_backup_trust" {
   count = var.enable_irsa && var.enable_postgres ? 1 : 0
 
+  # RDS service principal trust
   statement {
     actions = ["sts:AssumeRole"]
     effect  = "Allow"
@@ -10,6 +11,29 @@ data "aws_iam_policy_document" "postgres_backup_trust" {
     principals {
       type        = "Service"
       identifiers = ["rds.amazonaws.com"]
+    }
+  }
+
+  # OIDC trust for EKS service accounts
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:sub"
+      values   = ["system:serviceaccount:${var.postgres_backup_namespace}:${var.postgres_backup_service_account}"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${local.oidc_hostpath}:aud"
+      values   = ["sts.amazonaws.com"]
     }
   }
 }
