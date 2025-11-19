@@ -38,4 +38,9 @@ output "eks_control_plane_ingress_rule_id" {
 output "oidc_provider_url" {
   description = "The OpenID Connect identity provider (issuer URL)"
   value       = try("https://${module.eks.oidc_provider}", null)
-} 
+}
+
+output "postgres_backup_role_arn" {
+  description = "ARN of the IAM role for Postgres backup (created in infra module when IRSA is enabled)"
+  value       = var.enable_irsa && var.enable_postgres ? aws_iam_role.postgres_backup[0].arn : null
+}
