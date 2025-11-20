@@ -4,7 +4,7 @@
 ################################################################################
 
 module "irsa" {
-  source = "git::https://github.com/Nvision-x/nx-shared-irsa-modules.git?ref=dd4e762"
+  source = "git::https://github.com/Nvision-x/nx-shared-irsa-tf.git?ref=dd4e762"
   count  = var.enable_irsa ? 1 : 0
 
   # Common parameters
