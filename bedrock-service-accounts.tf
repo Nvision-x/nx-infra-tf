@@ -10,6 +10,10 @@ locals {
       name      = split(":", sa)[1]
     }
   } : {}
+
+  # Full Auto Deployment: Use locally created IRSA role (enable_bedrock_irsa=true)
+  # IAM Separation: Use external role ARN from nx-iam-tf (enable_bedrock_irsa=false)
+  bedrock_role_arn = var.enable_bedrock_irsa ? try(module.irsa[0].bedrock_iam_role_arn, "") : var.bedrock_irsa_role_arn
 }
 
 # Create namespaces for Bedrock service accounts if they don't exist
@@ -45,7 +49,7 @@ resource "kubernetes_service_account" "bedrock" {
     namespace = local.bedrock_service_accounts_parsed[each.key].namespace
 
     annotations = {
-      "eks.amazonaws.com/role-arn"               = var.bedrock_irsa_role_arn
+      "eks.amazonaws.com/role-arn"               = local.bedrock_role_arn
       "eks.amazonaws.com/sts-regional-endpoints" = "true"
     }
 
