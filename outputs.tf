@@ -49,4 +49,7 @@ output "bedrock_service_accounts" {
       role_arn  = v.metadata[0].annotations["eks.amazonaws.com/role-arn"]
     }
   } : {}
+output "postgres_backup_role_arn" {
+  description = "ARN of the IAM role for Postgres backup (created in infra module when IRSA is enabled)"
+  value       = var.enable_irsa && var.enable_postgres ? aws_iam_role.postgres_backup[0].arn : null
 }

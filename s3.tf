@@ -1,5 +1,5 @@
 resource "random_id" "s3_suffix" {
-  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup"])
+  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup"])
   byte_length = 4
 }
 
