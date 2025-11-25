@@ -421,6 +421,42 @@ variable "performance_insights_enabled" {
   default     = false
 }
 
+variable "performance_insights_retention_period" {
+  description = "Amount of time in days to retain Performance Insights data. Valid values are 7, 731 (2 years) or a multiple of 31"
+  type        = number
+  default     = 7
+}
+
+variable "storage_type" {
+  description = "The storage type for the RDS instance (gp2, gp3, io1, io2)"
+  type        = string
+  default     = "gp2"
+}
+
+variable "max_allocated_storage" {
+  description = "The upper limit to which RDS can automatically scale the storage. Set to 0 to disable storage autoscaling"
+  type        = number
+  default     = 0
+}
+
+variable "iops" {
+  description = "The amount of provisioned IOPS. Required for io1 and io2 storage types. Can be specified for gp3"
+  type        = number
+  default     = null
+}
+
+variable "storage_throughput" {
+  description = "The storage throughput value for gp3 storage type only (MiB/s). Valid range: 125-1000"
+  type        = number
+  default     = null
+}
+
+variable "multi_az" {
+  description = "Specifies if the RDS instance is multi-AZ"
+  type        = bool
+  default     = false
+}
+
 variable "postgres_ingress_rules" {
   description = "List of ingress rules"
   type = list(object({
@@ -430,6 +466,18 @@ variable "postgres_ingress_rules" {
     cidr_blocks = list(string)
   }))
   default = []
+}
+
+variable "postgres_backup_service_account" {
+  description = "Kubernetes service account name for PostgreSQL backup"
+  type        = string
+  default     = "databases-postgres-backup-sa"
+}
+
+variable "postgres_backup_namespace" {
+  description = "Kubernetes namespace for PostgreSQL backup service account"
+  type        = string
+  default     = "default"
 }
 
 

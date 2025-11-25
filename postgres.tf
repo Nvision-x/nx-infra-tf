@@ -50,9 +50,11 @@ module "postgresql" {
 
   instance_class        = var.instance_class
   allocated_storage     = var.allocated_storage
-  storage_type          = "gp2"
-  max_allocated_storage = 0
-  multi_az              = false
+  storage_type          = var.storage_type
+  max_allocated_storage = var.max_allocated_storage
+  iops                  = var.iops
+  storage_throughput    = var.storage_throughput
+  multi_az              = var.multi_az
   publicly_accessible   = false
   storage_encrypted     = true
 
@@ -65,16 +67,17 @@ module "postgresql" {
   vpc_security_group_ids = [aws_security_group.db_sg[0].id]
   db_subnet_group_name   = aws_db_subnet_group.private[0].name
 
-  backup_retention_period      = var.backup_retention_period
-  performance_insights_enabled = var.performance_insights_enabled
-  allow_major_version_upgrade  = var.allow_major_version_upgrade
-  apply_immediately            = var.apply_immediately
-  backup_window                = var.backup_window
-  copy_tags_to_snapshot        = var.copy_tags_to_snapshot
-  maintenance_window           = var.maintenance_window
-  manage_master_user_password  = var.manage_master_user_password
-  parameter_group_name         = var.parameter_group_name
-  skip_final_snapshot          = var.skip_final_snapshot
-  create_db_parameter_group    = false
-  tags                         = var.tags
+  backup_retention_period               = var.backup_retention_period
+  performance_insights_enabled          = var.performance_insights_enabled
+  performance_insights_retention_period = var.performance_insights_enabled ? var.performance_insights_retention_period : null
+  allow_major_version_upgrade           = var.allow_major_version_upgrade
+  apply_immediately                     = var.apply_immediately
+  backup_window                         = var.backup_window
+  copy_tags_to_snapshot                 = var.copy_tags_to_snapshot
+  maintenance_window                    = var.maintenance_window
+  manage_master_user_password           = var.manage_master_user_password
+  parameter_group_name                  = var.parameter_group_name
+  skip_final_snapshot                   = var.skip_final_snapshot
+  create_db_parameter_group             = false
+  tags                                  = var.tags
 }
