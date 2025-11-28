@@ -65,9 +65,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
   }
 }
 
-# S3.5 - Require SSL/TLS for all requests
+# S3.5 - Require SSL/TLS for all requests (excludes cloudtrail-logs which has its own policy)
 resource "aws_s3_bucket_policy" "require_ssl" {
-  for_each = aws_s3_bucket.nvisionx_buckets
+  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if k != "cloudtrail-logs" }
 
   bucket = each.value.id
 
@@ -93,7 +93,7 @@ resource "aws_s3_bucket_policy" "require_ssl" {
   })
 }
 
-# S3.22 & S3.23 - CloudTrail bucket policy for CloudTrail access
+# S3.5, S3.22 & S3.23 - CloudTrail bucket policy (SSL + CloudTrail access)
 resource "aws_s3_bucket_policy" "cloudtrail_logs" {
   bucket = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id
 
