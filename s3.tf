@@ -146,7 +146,7 @@ resource "aws_cloudtrail" "s3_data_events" {
   name                          = "nvisionx-s3-data-events"
   s3_bucket_name                = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id
   include_global_service_events = false
-  is_multi_region_trail         = true
+  is_multi_region_trail         = false
   enable_logging                = true
 
   event_selector {
