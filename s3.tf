@@ -1,5 +1,5 @@
 resource "random_id" "s3_suffix" {
-  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup"])
+  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup", "cloudtrail-logs"])
   byte_length = 4
 }
 
@@ -93,47 +93,9 @@ resource "aws_s3_bucket_policy" "require_ssl" {
   })
 }
 
-# S3.22 & S3.23 - CloudTrail for object-level read/write events
-resource "aws_s3_bucket" "cloudtrail_logs" {
-  bucket        = "nvisionx-cloudtrail-logs-${data.aws_caller_identity.current.account_id}"
-  force_destroy = var.s3_force_destroy
-
-  tags = {
-    Name    = "nvisionx-cloudtrail-logs"
-    Purpose = "CloudTrail S3 data event logs"
-    Project = "NvisionX"
-  }
-}
-
-resource "aws_s3_bucket_versioning" "cloudtrail_logs" {
-  bucket = aws_s3_bucket.cloudtrail_logs.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "cloudtrail_logs" {
-  bucket = aws_s3_bucket.cloudtrail_logs.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "cloudtrail_logs" {
-  bucket = aws_s3_bucket.cloudtrail_logs.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
+# S3.22 & S3.23 - CloudTrail bucket policy for CloudTrail access
 resource "aws_s3_bucket_policy" "cloudtrail_logs" {
-  bucket = aws_s3_bucket.cloudtrail_logs.id
+  bucket = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -144,8 +106,8 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
         Principal = "*"
         Action    = "s3:*"
         Resource = [
-          aws_s3_bucket.cloudtrail_logs.arn,
-          "${aws_s3_bucket.cloudtrail_logs.arn}/*"
+          aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].arn,
+          "${aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].arn}/*"
         ]
         Condition = {
           Bool = {
@@ -160,7 +122,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
           Service = "cloudtrail.amazonaws.com"
         }
         Action   = "s3:GetBucketAcl"
-        Resource = aws_s3_bucket.cloudtrail_logs.arn
+        Resource = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].arn
       },
       {
         Sid    = "AWSCloudTrailWrite"
@@ -169,7 +131,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
           Service = "cloudtrail.amazonaws.com"
         }
         Action   = "s3:PutObject"
-        Resource = "${aws_s3_bucket.cloudtrail_logs.arn}/*"
+        Resource = "${aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].arn}/*"
         Condition = {
           StringEquals = {
             "s3:x-amz-acl" = "bucket-owner-full-control"
@@ -182,7 +144,7 @@ resource "aws_s3_bucket_policy" "cloudtrail_logs" {
 
 resource "aws_cloudtrail" "s3_data_events" {
   name                          = "nvisionx-s3-data-events"
-  s3_bucket_name                = aws_s3_bucket.cloudtrail_logs.id
+  s3_bucket_name                = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id
   include_global_service_events = false
   is_multi_region_trail         = true
   enable_logging                = true
@@ -193,7 +155,7 @@ resource "aws_cloudtrail" "s3_data_events" {
 
     data_resource {
       type   = "AWS::S3::Object"
-      values = [for bucket in aws_s3_bucket.nvisionx_buckets : "${bucket.arn}/"]
+      values = [for k, bucket in aws_s3_bucket.nvisionx_buckets : "${bucket.arn}/" if k != "cloudtrail-logs"]
     }
   }
 
