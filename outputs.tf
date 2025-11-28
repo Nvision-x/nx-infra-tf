@@ -40,7 +40,53 @@ output "oidc_provider_url" {
   value       = try("https://${module.eks.oidc_provider}", null)
 }
 
+output "bedrock_service_accounts" {
+  description = "List of created Kubernetes ServiceAccounts for Bedrock access"
+  value = var.enable_bedrock_service_accounts ? {
+    for k, v in kubernetes_service_account.bedrock : k => {
+      name      = v.metadata[0].name
+      namespace = v.metadata[0].namespace
+      role_arn  = v.metadata[0].annotations["eks.amazonaws.com/role-arn"]
+    }
+  } : {}
+}
+
+output "bedrock_irsa_role_arn" {
+  description = "IAM Role ARN for Amazon Bedrock access from EKS pods (created in nx-infra-tf for full auto deployment)"
+  value       = try(module.irsa[0].bedrock_iam_role_arn, null)
+}
+
+output "bedrock_iam_policy_arn" {
+  description = "IAM Policy ARN for Amazon Bedrock access (contains capability and provider filtering)"
+  value       = try(module.irsa[0].bedrock_iam_policy_arn, null)
+}
+
+output "bedrock_enabled_capabilities" {
+  description = "List of enabled Bedrock capabilities"
+  value       = var.enable_bedrock_irsa ? var.bedrock_capabilities : []
+}
+
+output "bedrock_enabled_providers" {
+  description = "List of enabled Bedrock model providers (after filtering)"
+  value       = var.enable_bedrock_irsa ? module.irsa[0].bedrock_enabled_providers : []
+}
+
 output "postgres_backup_role_arn" {
   description = "ARN of the IAM role for Postgres backup (created in infra module when IRSA is enabled)"
-  value       = var.enable_irsa && var.enable_postgres ? aws_iam_role.postgres_backup[0].arn : null
+  value       = try(module.irsa[0].postgres_backup_iam_role_arn, null)
+}
+
+output "lb_controller_irsa_role_arn" {
+  description = "IAM Role ARN for AWS Load Balancer Controller"
+  value       = try(module.irsa[0].lb_controller_iam_role_arn, null)
+}
+
+output "cluster_autoscaler_irsa_role_arn" {
+  description = "IAM Role ARN for Cluster Autoscaler"
+  value       = try(module.irsa[0].cluster_autoscaler_iam_role_arn, null)
+}
+
+output "ebs_csi_irsa_role_arn" {
+  description = "EBS CSI IRSA role ARN"
+  value       = try(module.irsa[0].ebs_csi_iam_role_arn, null)
 }
