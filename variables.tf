@@ -582,6 +582,12 @@ variable "s3_force_destroy" {
   default     = false
 }
 
+variable "enable_security_hub_controls" {
+  description = "Enable Security Hub compliance resources (CloudTrail S3 data events, KMS encryption, access logging)"
+  type        = bool
+  default     = true
+}
+
 variable "snapshot_role_arn" {
   description = "ARN of the IAM role for OpenSearch snapshots (if created outside this module)"
   type        = string
