@@ -588,6 +588,12 @@ variable "enable_security_hub_controls" {
   default     = true
 }
 
+variable "cloudtrail_log_all_s3_buckets" {
+  description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account (required for S3.22/S3.23 compliance). When false, only logs NvisionX managed buckets. Set to false for customer deployments where customers have their own buckets."
+  type        = bool
+  default     = true
+}
+
 variable "snapshot_role_arn" {
   description = "ARN of the IAM role for OpenSearch snapshots (if created outside this module)"
   type        = string
