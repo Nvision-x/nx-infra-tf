@@ -315,8 +315,8 @@ resource "aws_cloudtrail" "s3_data_events" {
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_logging                = true
-  enable_log_file_validation    = true                           # CloudTrail.4
-  kms_key_id                    = aws_kms_key.cloudtrail[0].arn  # CloudTrail.2
+  enable_log_file_validation    = true                          # CloudTrail.4
+  kms_key_id                    = aws_kms_key.cloudtrail[0].arn # CloudTrail.2
 
   event_selector {
     read_write_type           = "All"
@@ -324,10 +324,9 @@ resource "aws_cloudtrail" "s3_data_events" {
 
     data_resource {
       type = "AWS::S3::Object"
-      values = concat(
-        [for k, bucket in aws_s3_bucket.nvisionx_buckets : "${bucket.arn}/" if k != "cloudtrail-logs"],
-        ["${aws_s3_bucket.cloudtrail_access_logs[0].arn}/"]
-      )
+      # When cloudtrail_log_all_s3_buckets=true: logs ALL buckets (required for S3.22/S3.23 compliance)
+      # When cloudtrail_log_all_s3_buckets=false: logs only NvisionX managed buckets (for customer deployments)
+      values = var.cloudtrail_log_all_s3_buckets ? ["arn:aws:s3:::"] : [for k, v in aws_s3_bucket.nvisionx_buckets : "${v.arn}/*" if k != "cloudtrail-logs"]
     }
   }
 
