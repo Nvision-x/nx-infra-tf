@@ -55,7 +55,7 @@ locals {
 module "opensearch" {
   count                 = var.enable_opensearch ? 1 : 0
   source                = "terraform-aws-modules/opensearch/aws"
-  version               = "2.4.0"
+  version               = "1.7.0"
   create_security_group = false
 
   # Domain
