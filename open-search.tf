@@ -39,6 +39,7 @@ module "opensearch" {
   advanced_options = {
     "indices.fielddata.cache.size"           = "20"
     "indices.query.bool.max_clause_count"    = "1024"
+    "override_main_response_version"         = "false"
     "rest.action.multi.allow_explicit_index" = "true"
   }
 
