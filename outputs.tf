@@ -90,3 +90,20 @@ output "ebs_csi_irsa_role_arn" {
   description = "EBS CSI IRSA role ARN"
   value       = try(module.irsa[0].ebs_csi_iam_role_arn, null)
 }
+
+# --------------------- CloudTrail (for security baseline) -----------------------------
+
+output "cloudtrail_bucket_name" {
+  description = "Name of S3 bucket for CloudTrail logs"
+  value       = var.enable_security_hub_controls ? aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id : null
+}
+
+output "cloudtrail_access_logs_bucket_name" {
+  description = "Name of S3 bucket for CloudTrail access logs"
+  value       = var.enable_security_hub_controls ? aws_s3_bucket.cloudtrail_access_logs[0].id : null
+}
+
+output "cloudtrail_kms_key_arn" {
+  description = "ARN of KMS key for CloudTrail encryption"
+  value       = var.enable_security_hub_controls ? aws_kms_key.cloudtrail[0].arn : null
+}
