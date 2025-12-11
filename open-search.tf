@@ -28,6 +28,29 @@ resource "aws_security_group" "opensearch_sg" {
 data "aws_caller_identity" "current" {}
 
 
+# Local to determine if override_main_response_version is supported
+# This option is NOT supported in OpenSearch 2.x, but IS supported in 1.x, 3.x+, and Elasticsearch
+locals {
+  opensearch_major_version = (
+    startswith(var.engine_version, "OpenSearch_") ?
+    tonumber(split(".", split("_", var.engine_version)[1])[0]) :
+    0 # Elasticsearch versions
+  )
+
+  # Exclude override_main_response_version only for OpenSearch 2.x
+  supports_override_response_version = local.opensearch_major_version != 2
+
+  advanced_options_base = {
+    "indices.fielddata.cache.size"           = "20"
+    "indices.query.bool.max_clause_count"    = "1024"
+    "rest.action.multi.allow_explicit_index" = "true"
+  }
+
+  advanced_options = local.supports_override_response_version ? merge(local.advanced_options_base, {
+    "override_main_response_version" = "false"
+  }) : local.advanced_options_base
+}
+
 # OpenSearch module configuration
 module "opensearch" {
   count                 = var.enable_opensearch ? 1 : 0
@@ -36,12 +59,7 @@ module "opensearch" {
   create_security_group = false
 
   # Domain
-  advanced_options = {
-    "indices.fielddata.cache.size"           = "20"
-    "indices.query.bool.max_clause_count"    = "1024"
-    "override_main_response_version"         = "false"
-    "rest.action.multi.allow_explicit_index" = "true"
-  }
+  advanced_options = local.advanced_options
 
   advanced_security_options = {
     enabled                        = true
