@@ -27,9 +27,12 @@ module "eks" {
     kube-proxy             = {}
     vpc-cni                = {}
     aws-ebs-csi-driver = {
-      # Pod Identity association is created separately in pod-identity-associations.tf
-      # Explicitly clear service_account_role_arn (was set from old IRSA config)
-      service_account_role_arn = null
+      # Use Pod Identity instead of IRSA for EBS CSI
+      # This replaces the old service_account_role_arn approach
+      pod_identity_association = [{
+        role_arn        = var.ebs_csi_role_arn
+        service_account = "ebs-csi-controller-sa"
+      }]
     }
     amazon-cloudwatch-observability = {}
   }

@@ -5,23 +5,9 @@
 #
 # Note: count/for_each conditions use plan-time known variables (not role ARNs)
 # because role ARNs come from another module and aren't known until apply.
+#
+# EBS CSI Pod Identity is handled via addon's pod_identity_association in eks-cluster.tf
 ################################################################################
-
-################################################################################
-# EBS CSI Driver Pod Identity Association
-################################################################################
-
-resource "aws_eks_pod_identity_association" "ebs_csi" {
-  # EBS CSI is always enabled for EKS clusters
-  count = 1
-
-  cluster_name    = module.eks.cluster_name
-  namespace       = "kube-system"
-  service_account = "ebs-csi-controller-sa"
-  role_arn        = var.ebs_csi_role_arn
-
-  depends_on = [module.eks]
-}
 
 ################################################################################
 # Cluster Autoscaler Pod Identity Association
