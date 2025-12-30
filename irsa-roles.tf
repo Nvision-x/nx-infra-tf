@@ -1,16 +1,14 @@
 ################################################################################
-# Unified IRSA Module - Full Auto Deployment Pattern
-# All IRSA roles managed through single shared module
+# Unified Pod Identity Module - Full Auto Deployment Pattern
+# Migrated from IRSA to EKS Pod Identity (AWS recommended approach)
 ################################################################################
 
 module "irsa" {
-  source = "git::https://github.com/Nvision-x/nx-shared-irsa-tf.git?ref=dd4e762"
+  source = "git::https://github.com/Nvision-x/nx-shared-irsa-tf.git?ref=NXE-1415"
   count  = var.enable_irsa ? 1 : 0
 
-  # Common parameters
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_issuer_url   = module.eks.cluster_oidc_issuer_url
-  cluster_name      = var.cluster_name
+  # Common parameters - Pod Identity only needs cluster_name
+  cluster_name = var.cluster_name
 
   # Enable specific roles
   enable_bedrock            = var.enable_bedrock_irsa
@@ -42,7 +40,7 @@ module "irsa" {
   postgres_s3_bucket_arn_pattern  = "arn:aws:s3:::nvisionx*"
 
   # EBS CSI configuration
-  ebs_csi_role_name       = "${var.cluster_name}-ebs-csi-irsa"
+  ebs_csi_role_name       = "${var.cluster_name}-ebs-csi"
   ebs_csi_namespace       = "kube-system"
   ebs_csi_service_account = "ebs-csi-controller-sa"
 

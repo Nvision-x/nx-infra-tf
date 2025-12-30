@@ -20,15 +20,15 @@ terraform {
   required_providers {
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = ">= 1.14.0"
+      version = "~> 1.19"
     }
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.0, < 6.0.0"
+      version = "~> 6.0"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.6.0, <= 2.17.0"
+      version = "~> 3.0"
     }
   }
   required_version = ">= 1.0"
