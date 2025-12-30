@@ -68,7 +68,7 @@ output "bedrock_enabled_capabilities" {
 
 output "bedrock_enabled_providers" {
   description = "List of enabled Bedrock model providers (after filtering)"
-  value       = var.enable_bedrock_irsa ? module.irsa[0].bedrock_enabled_providers : []
+  value       = try(module.irsa[0].bedrock_enabled_providers, [])
 }
 
 output "postgres_backup_role_arn" {
