@@ -88,11 +88,6 @@ variable "enable_irsa" {
   default     = false
 }
 
-variable "ebs_csi_irsa_role_arn" {
-  type        = string
-  description = "IAM role ARN for EBS CSI controller service account (IRSA)"
-  default     = ""
-}
 
 variable "create_iam_role" {
   description = "Whether to create a new IAM role for the EKS cluster. Set to false if IAM is managed externally."
@@ -145,6 +140,61 @@ variable "lb_controller_service_account" {
   default     = ""
 }
 
+################################################################################
+# Pod Identity Role ARNs (from nx-iam-tf)
+################################################################################
+
+variable "ebs_csi_role_arn" {
+  description = "IAM role ARN for EBS CSI controller (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "cluster_autoscaler_role_arn" {
+  description = "IAM role ARN for Cluster Autoscaler (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "lb_controller_role_arn" {
+  description = "IAM role ARN for AWS Load Balancer Controller (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "postgres_backup_role_arn" {
+  description = "IAM role ARN for Postgres backup (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "bedrock_role_arn" {
+  description = "IAM role ARN for Bedrock access (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+################################################################################
+# Application S3 Access Pod Identity
+################################################################################
+
+variable "enable_app_s3_access" {
+  description = "Enable Application S3 Access Pod Identity associations"
+  type        = bool
+  default     = false
+}
+
+variable "app_s3_role_arn" {
+  description = "IAM role ARN for Application S3 access (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "app_s3_service_accounts" {
+  description = "List of namespace:serviceaccount pairs for application S3 access"
+  type        = list(string)
+  default     = []
+}
 
 # ----------------------------- Bastion --------------------------------------
 
