@@ -31,10 +31,7 @@ module "eks" {
     }
     amazon-cloudwatch-observability = {}
   }
-  eks_managed_node_group_defaults = {
-    disk_size       = 50
-    disk_encryption = true
-  }
+
   tags = var.tags
 }
 
