@@ -82,13 +82,6 @@ variable "cluster_endpoint_public_access" {
   default     = true
 }
 
-variable "enable_irsa" {
-  description = "Enable IRSA (IAM Roles for Service Accounts). OIDC provider will be created by IAM module."
-  type        = bool
-  default     = false
-}
-
-
 variable "create_iam_role" {
   description = "Whether to create a new IAM role for the EKS cluster. Set to false if IAM is managed externally."
   type        = bool
@@ -107,8 +100,6 @@ variable "eks_access_principal_arn" {
   type        = string
   default     = null
 }
-
-// for oidc 
 
 variable "namespace" {
   description = "Namespace where resources will be created"
@@ -712,11 +703,6 @@ variable "bedrock_service_accounts" {
   default     = []
 }
 
-variable "bedrock_irsa_role_arn" {
-  description = "IAM Role ARN for Bedrock IRSA (used when enable_bedrock_irsa=false, i.e., role created externally in nx-iam-tf)"
-  type        = string
-  default     = ""
-}
 
 variable "create_bedrock_namespaces" {
   description = "Whether to automatically create namespaces for Bedrock service accounts if they don't exist"
@@ -725,18 +711,14 @@ variable "create_bedrock_namespaces" {
 }
 
 ################################################################################
-# Bedrock IRSA Configuration
+# Bedrock Pod Identity Configuration
 ################################################################################
 
 variable "enable_bedrock_irsa" {
   description = <<-EOF
-    Enable Bedrock IRSA role creation in nx-infra-tf.
-
-    Deployment Patterns:
-    1. Full Auto Deployment: Set to TRUE - creates IRSA role here in nx-infra-tf
-    2. IAM Separation: Set to FALSE - creates IRSA role in nx-iam-tf instead
-       (3-stage: deploy nx-iam without IRSA → deploy nx-infra → redeploy nx-iam with IRSA)
-
+    Enable Bedrock Pod Identity associations.
+    When TRUE, creates Pod Identity associations for Bedrock service accounts.
+    IAM role must be created in nx-iam-tf and passed via bedrock_role_arn.
     Default is FALSE (disabled).
   EOF
   type        = bool
@@ -755,7 +737,7 @@ variable "bedrock_role_name" {
 
 variable "bedrock_capabilities" {
   description = <<-EOF
-    List of Bedrock capabilities to enable (only applies when enable_bedrock_irsa = true).
+    List of Bedrock capabilities enabled (configured in nx-iam-tf).
     Available options:
     - "invoke"          : Basic model invocation (InvokeModel)
     - "streaming"       : Streaming responses (InvokeModelWithResponseStream)
@@ -784,8 +766,7 @@ variable "bedrock_capabilities" {
 
 variable "bedrock_excluded_providers" {
   description = <<-EOF
-    List of model providers to EXCLUDE from access.
-    Only applies when enable_bedrock_irsa = true.
+    List of model providers to EXCLUDE from access (configured in nx-iam-tf).
 
     Available providers:
     - "anthropic"     : Anthropic Claude models
@@ -797,7 +778,6 @@ variable "bedrock_excluded_providers" {
     - "stability"     : Stability AI image models
 
     Example: ["anthropic", "cohere"] will block Anthropic and Cohere models
-    Note: This is ignored if bedrock_use_custom_model_arns = true
   EOF
   type        = list(string)
   default     = []
@@ -813,14 +793,12 @@ variable "bedrock_excluded_providers" {
 
 variable "bedrock_allowed_providers" {
   description = <<-EOF
-    List of model providers to ALLOW access to. If empty, all providers are allowed (except those in excluded_providers).
-    Only applies when enable_bedrock_irsa = true.
+    List of model providers to ALLOW access to (configured in nx-iam-tf).
+    If empty, all providers are allowed (except those in excluded_providers).
 
     Available providers: anthropic, amazon, ai21, cohere, meta, mistral, stability
 
     Example: ["amazon", "ai21"] will ONLY allow Amazon and AI21 models
-    Note: bedrock_excluded_providers is applied after this filter
-    Note: This is ignored if bedrock_use_custom_model_arns = true
   EOF
   type        = list(string)
   default     = []

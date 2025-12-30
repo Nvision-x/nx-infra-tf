@@ -13,11 +13,6 @@ output "eks_cluster_name" {
   value       = module.eks.cluster_name
 }
 
-output "eks_oidc_provider_arn" {
-  description = "The OIDC provider ARN for the EKS cluster"
-  value       = module.eks.oidc_provider_arn
-}
-
 # Output the private key for the user
 output "private_key_pem" {
   description = "The private key in PEM format (only generated if enable_nfs is true and no existing PEM is provided)"
@@ -33,11 +28,6 @@ output "bastion_private_key_pem" {
 
 output "eks_control_plane_ingress_rule_id" {
   value = aws_security_group_rule.eks_control_plane_ingress.id
-}
-
-output "oidc_provider_url" {
-  description = "The OpenID Connect identity provider (issuer URL)"
-  value       = try("https://${module.eks.oidc_provider}", null)
 }
 
 output "bedrock_service_accounts" {
