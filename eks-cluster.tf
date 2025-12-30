@@ -28,7 +28,8 @@ module "eks" {
     vpc-cni                = {}
     aws-ebs-csi-driver = {
       # Pod Identity association is created separately in pod-identity-associations.tf
-      # No service_account_role_arn needed when using Pod Identity
+      # Explicitly clear service_account_role_arn (was set from old IRSA config)
+      service_account_role_arn = null
     }
     amazon-cloudwatch-observability = {}
   }
