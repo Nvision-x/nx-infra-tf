@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate new version
+        id: new_version
+        run: |
+          # Get today's date in YYYY.MM.DD format
+          TODAY=$(date +%Y.%m.%d)
+          DATE_PREFIX="v${TODAY}"
+
+          echo "Today's date prefix: $DATE_PREFIX"
+
+          # Find the latest tag for today (if any)
+          LATEST_TODAY_TAG=$(git tag -l "${DATE_PREFIX}-*" | sort -t- -k2 -n | tail -1)
+
+          if [ -z "$LATEST_TODAY_TAG" ]; then
+            # No tags for today, start at 1
+            BUILD_NUM=1
+          else
+            # Extract build number and increment
+            CURRENT_BUILD=$(echo "$LATEST_TODAY_TAG" | sed "s/${DATE_PREFIX}-//")
+            BUILD_NUM=$((CURRENT_BUILD + 1))
+          fi
+
+          NEW_VERSION="${DATE_PREFIX}-${BUILD_NUM}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Get previous tag for changelog
+        id: prev_tag
+        run: |
+          # Get the latest existing tag (any date)
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+          echo "Previous tag: $PREV_TAG"
+
+      - name: Generate changelog
+        run: |
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
+
+          # Generate changelog from commits
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" | head -50)
+          else
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)")
+          fi
+
+          # Write to file for multiline support
+          echo "$CHANGELOG" > /tmp/changelog.txt
+
+          echo "Changelog:"
+          echo "$CHANGELOG"
+
+      - name: Create and push tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
+
+          echo "Created and pushed tag: $NEW_VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.new_version.outputs.new_version }}
+          name: Release ${{ steps.new_version.outputs.new_version }}
+          body_path: /tmp/changelog.txt
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
