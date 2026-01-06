@@ -43,7 +43,7 @@ resource "aws_security_group" "db_sg" {
 module "postgresql" {
   count      = var.enable_postgres ? 1 : 0
   source     = "terraform-aws-modules/rds/aws"
-  version    = "6.12.0"
+  version    = "~> 6.0"
   identifier = var.db_identifier
   engine     = "postgres"
   family     = "postgres${var.postgres_version}"

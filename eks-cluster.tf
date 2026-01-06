@@ -4,37 +4,39 @@ resource "aws_ebs_encryption_by_default" "this" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.37.0"
+  version = "~> 21.0"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
 
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnets
 
-  cluster_endpoint_private_access          = var.cluster_endpoint_private_access
-  cluster_endpoint_public_access           = var.cluster_endpoint_public_access
-  cluster_endpoint_public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
-  enable_irsa                              = var.enable_irsa
-  create_iam_role                          = var.create_iam_role
-  iam_role_arn                             = var.cluster_iam_role_arn
-  eks_managed_node_groups                  = var.eks_managed_node_groups
+  endpoint_private_access      = var.cluster_endpoint_private_access
+  endpoint_public_access       = var.cluster_endpoint_public_access
+  endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+  enable_irsa                  = false # Using Pod Identity instead
+  create_iam_role              = var.create_iam_role
+  iam_role_arn                 = var.cluster_iam_role_arn
+  eks_managed_node_groups      = var.eks_managed_node_groups
   enable_cluster_creator_admin_permissions = true
 
-  cluster_addons = {
+  addons = {
     coredns                = {}
     eks-pod-identity-agent = {}
     kube-proxy             = {}
     vpc-cni                = {}
     aws-ebs-csi-driver = {
-      service_account_role_arn = var.enable_irsa ? try(module.irsa[0].ebs_csi_iam_role_arn, null) : var.ebs_csi_irsa_role_arn
+      # Use Pod Identity instead of IRSA for EBS CSI
+      # This replaces the old service_account_role_arn approach
+      pod_identity_association = [{
+        role_arn        = var.ebs_csi_role_arn
+        service_account = "ebs-csi-controller-sa"
+      }]
     }
     amazon-cloudwatch-observability = {}
   }
-  eks_managed_node_group_defaults = {
-    disk_size       = 50
-    disk_encryption = true
-  }
+
   tags = var.tags
 }
 
