@@ -34,7 +34,20 @@ module "eks" {
         service_account = "ebs-csi-controller-sa"
       }]
     }
-    amazon-cloudwatch-observability = {}
+    # Disable all auto-instrumentation to reduce complexity and overhead
+    # CloudWatch Container Insights and logs still work without auto-instrumentation
+    amazon-cloudwatch-observability = {
+      configuration_values = jsonencode({
+        manager = {
+          autoInstrumentationConfiguration = {
+            java   = { instrumentation = { enabled = false } }
+            python = { instrumentation = { enabled = false } }
+            dotnet = { instrumentation = { enabled = false } }
+            nodejs = { instrumentation = { enabled = false } }
+          }
+        }
+      })
+    }
   }
 
   tags = var.tags
