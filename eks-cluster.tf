@@ -34,7 +34,21 @@ module "eks" {
         service_account = "ebs-csi-controller-sa"
       }]
     }
-    amazon-cloudwatch-observability = {}
+    # Disable Python auto-instrumentation to prevent PYTHONPATH override issue
+    # v5.0.0+ overwrites PYTHONPATH without preserving app paths, breaking Python apps
+    amazon-cloudwatch-observability = {
+      configuration_values = jsonencode({
+        manager = {
+          autoInstrumentationConfiguration = {
+            python = {
+              instrumentation = {
+                enabled = false
+              }
+            }
+          }
+        }
+      })
+    }
   }
 
   tags = var.tags
