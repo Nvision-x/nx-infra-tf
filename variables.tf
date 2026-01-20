@@ -871,3 +871,22 @@ variable "bedrock_guardrail_arns" {
   default     = ["arn:aws:bedrock:*:*:guardrail/*"]
 }
 
+# ----------------------------- Appcues ----------------------------------
+
+variable "appcues_account_id" {
+  description = "Appcues account ID for frontend integration"
+  type        = string
+  default     = "224606"
+}
+
+variable "appcues_bundle_domain" {
+  description = "Appcues bundle domain URL"
+  type        = string
+  default     = "https://acf.us.nvisionx.ai"
+}
+
+variable "appcues_api_hostname" {
+  description = "Appcues API hostname"
+  type        = string
+  default     = "ac.us.nvisionx.ai"
+}
