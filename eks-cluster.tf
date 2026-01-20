@@ -34,16 +34,16 @@ module "eks" {
         service_account = "ebs-csi-controller-sa"
       }]
     }
-    # Disable all auto-instrumentation to reduce complexity and overhead
-    # CloudWatch Container Insights and logs still work without auto-instrumentation
+    # Disable Application Signals auto-monitoring to prevent OTEL injection
+    # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
+    # CloudWatch Container Insights and logs still work
     amazon-cloudwatch-observability = {
       configuration_values = jsonencode({
         manager = {
-          autoInstrumentationConfiguration = {
-            java   = { instrumentation = { enabled = false } }
-            python = { instrumentation = { enabled = false } }
-            dotnet = { instrumentation = { enabled = false } }
-            nodejs = { instrumentation = { enabled = false } }
+          applicationSignals = {
+            autoMonitor = {
+              monitorAllServices = false
+            }
           }
         }
       })
