@@ -34,6 +34,12 @@ module "eks" {
         service_account = "ebs-csi-controller-sa"
       }]
     }
+    aws-efs-csi-driver = var.enable_efs ? {
+      pod_identity_association = [{
+        role_arn        = var.efs_csi_role_arn
+        service_account = "efs-csi-controller-sa"
+      }]
+    } : null
     # Disable Application Signals auto-monitoring to prevent OTEL injection
     # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
     # CloudWatch Container Insights and logs still work

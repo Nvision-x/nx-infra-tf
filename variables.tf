@@ -141,6 +141,18 @@ variable "ebs_csi_role_arn" {
   default     = ""
 }
 
+variable "enable_efs" {
+  description = "Enable EFS filesystem for zone-independent persistent storage (e.g., Valkey cache)"
+  type        = bool
+  default     = false
+}
+
+variable "efs_csi_role_arn" {
+  description = "IAM role ARN for EFS CSI controller (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
 variable "cluster_autoscaler_role_arn" {
   description = "IAM role ARN for Cluster Autoscaler (from nx-iam-tf)"
   type        = string

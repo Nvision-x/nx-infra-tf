@@ -45,6 +45,11 @@ output "bedrock_enabled_capabilities" {
   value       = var.enable_bedrock_irsa ? var.bedrock_capabilities : []
 }
 
+output "efs_file_system_id" {
+  description = "EFS filesystem ID"
+  value       = var.enable_efs ? aws_efs_file_system.this[0].id : null
+}
+
 # --------------------- CloudTrail (for security baseline) -----------------------------
 
 output "cloudtrail_bucket_name" {
