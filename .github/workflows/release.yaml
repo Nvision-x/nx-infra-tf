@@ -5,8 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   release:
     uses: Nvision-x/shared-workflows/.github/workflows/calver-release.yml@main
-    permissions:
-      contents: write
+
