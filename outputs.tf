@@ -54,7 +54,7 @@ output "efs_file_system_id" {
 
 output "cloudtrail_bucket_name" {
   description = "Name of S3 bucket for CloudTrail logs"
-  value       = var.enable_security_hub_controls ? aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id : null
+  value       = try(aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id, null)
 }
 
 output "cloudtrail_access_logs_bucket_name" {
