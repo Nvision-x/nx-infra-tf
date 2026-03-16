@@ -50,8 +50,9 @@ module "postgresql" {
 
   instance_class        = var.instance_class
   allocated_storage     = var.allocated_storage
-  storage_type          = "gp2"
-  max_allocated_storage = 0
+  storage_type          = var.storage_type
+  max_allocated_storage = var.max_allocated_storage
+  iops                  = var.iops
   multi_az              = false
   publicly_accessible   = false
   storage_encrypted     = true
@@ -66,7 +67,8 @@ module "postgresql" {
   db_subnet_group_name   = aws_db_subnet_group.private[0].name
 
   backup_retention_period      = var.backup_retention_period
-  performance_insights_enabled = var.performance_insights_enabled
+  performance_insights_enabled          = var.performance_insights_enabled
+  performance_insights_retention_period = var.performance_insights_retention_period
   allow_major_version_upgrade  = var.allow_major_version_upgrade
   apply_immediately            = var.apply_immediately
   backup_window                = var.backup_window

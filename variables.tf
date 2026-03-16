@@ -474,6 +474,30 @@ variable "performance_insights_enabled" {
   default     = false
 }
 
+variable "performance_insights_retention_period" {
+  description = "Amount of time in days to retain Performance Insights data (7, 31, 62, 93, 124, 155, 186, 217, 248, 279, 310, 341, 372, 403, 434, 465, 496, 527, 558, 589, 620, 651, 682, 713, 731)"
+  type        = number
+  default     = 7
+}
+
+variable "storage_type" {
+  description = "Storage type for the RDS instance (gp2, gp3, io1, io2)"
+  type        = string
+  default     = "gp2"
+}
+
+variable "max_allocated_storage" {
+  description = "Upper limit for storage autoscaling (0 to disable)"
+  type        = number
+  default     = 0
+}
+
+variable "iops" {
+  description = "Provisioned IOPS for the RDS instance (required for io1/io2 storage types)"
+  type        = number
+  default     = null
+}
+
 variable "postgres_ingress_rules" {
   description = "List of ingress rules"
   type = list(object({
