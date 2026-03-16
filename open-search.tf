@@ -78,7 +78,18 @@ module "opensearch" {
     instance_type            = var.opensearch_instance_type
 
     dedicated_master_count = var.enable_masternodes ? var.number_of_master_nodes : 0
-    dedicated_master_type  = var.enable_masternodes ? var.opensearch_instance_type : ""
+    dedicated_master_type  = var.enable_masternodes ? (var.opensearch_master_instance_type != "" ? var.opensearch_master_instance_type : var.opensearch_instance_type) : ""
+
+    node_options = var.opensearch_coordinator_nodes_enabled ? [
+      {
+        node_type = "coordinator"
+        node_config = {
+          count   = var.opensearch_coordinator_node_count
+          enabled = true
+          type    = var.opensearch_coordinator_instance_type
+        }
+      }
+    ] : []
 
     zone_awareness_config = {
       availability_zone_count = var.zone_awareness_enabled ? var.availability_zone_count : 1
@@ -97,6 +108,8 @@ module "opensearch" {
     ebs_enabled = true
     volume_type = var.ebs_volume_type
     volume_size = var.ebs_volume_size
+    iops        = var.opensearch_ebs_iops
+    throughput  = var.opensearch_ebs_throughput
   }
   encrypt_at_rest = {
     enabled = true

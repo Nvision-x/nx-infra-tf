@@ -593,6 +593,42 @@ variable "ebs_volume_type" {
   default     = "gp3"
 }
 
+variable "opensearch_ebs_iops" {
+  description = "Provisioned IOPS for OpenSearch EBS volumes"
+  type        = number
+  default     = null
+}
+
+variable "opensearch_ebs_throughput" {
+  description = "Provisioned throughput (MiB/s) for OpenSearch gp3 EBS volumes"
+  type        = number
+  default     = null
+}
+
+variable "opensearch_master_instance_type" {
+  description = "Instance type for dedicated master nodes (defaults to data node instance type if not set)"
+  type        = string
+  default     = ""
+}
+
+variable "opensearch_coordinator_nodes_enabled" {
+  description = "Enable coordinator nodes for OpenSearch"
+  type        = bool
+  default     = false
+}
+
+variable "opensearch_coordinator_node_count" {
+  description = "Number of coordinator nodes"
+  type        = number
+  default     = 0
+}
+
+variable "opensearch_coordinator_instance_type" {
+  description = "Instance type for coordinator nodes"
+  type        = string
+  default     = ""
+}
+
 variable "opensearch_ingress_rules" {
   description = "List of ingress rules"
   type = list(object({
