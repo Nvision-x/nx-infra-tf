@@ -29,7 +29,7 @@ data "aws_caller_identity" "current" {}
 
 
 # Local to determine if override_main_response_version is supported
-# This option is NOT supported in OpenSearch 2.x, but IS supported in 1.x, 3.x+, and Elasticsearch
+# This option is only supported in OpenSearch 1.x and Elasticsearch
 locals {
   opensearch_major_version = (
     startswith(var.engine_version, "OpenSearch_") ?
@@ -37,8 +37,8 @@ locals {
     0 # Elasticsearch versions
   )
 
-  # Exclude override_main_response_version only for OpenSearch 2.x
-  supports_override_response_version = local.opensearch_major_version != 2
+  # Only include override_main_response_version for OpenSearch 1.x and Elasticsearch
+  supports_override_response_version = local.opensearch_major_version <= 1
 
   advanced_options_base = {
     "indices.fielddata.cache.size"           = "20"
