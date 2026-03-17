@@ -21,40 +21,46 @@ module "eks" {
   eks_managed_node_groups      = var.eks_managed_node_groups
   enable_cluster_creator_admin_permissions = true
 
-  addons = {
-    coredns                = {}
-    eks-pod-identity-agent = {}
-    kube-proxy             = {}
-    vpc-cni                = {}
-    aws-ebs-csi-driver = {
-      # Use Pod Identity instead of IRSA for EBS CSI
-      # This replaces the old service_account_role_arn approach
-      pod_identity_association = [{
-        role_arn        = var.ebs_csi_role_arn
-        service_account = "ebs-csi-controller-sa"
-      }]
-    }
-    aws-efs-csi-driver = var.enable_efs ? {
-      pod_identity_association = [{
-        role_arn        = var.efs_csi_role_arn
-        service_account = "efs-csi-controller-sa"
-      }]
-    } : null
-    # Disable Application Signals auto-monitoring to prevent OTEL injection
-    # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
-    # CloudWatch Container Insights and logs still work
-    amazon-cloudwatch-observability = {
-      configuration_values = jsonencode({
-        manager = {
-          applicationSignals = {
-            autoMonitor = {
-              monitorAllServices = false
+  addons = merge(
+    {
+      coredns                = {}
+      eks-pod-identity-agent = {}
+      kube-proxy             = {}
+      vpc-cni                = {}
+      aws-ebs-csi-driver = {
+        # Use Pod Identity instead of IRSA for EBS CSI
+        # This replaces the old service_account_role_arn approach
+        pod_identity_association = [{
+          role_arn        = var.ebs_csi_role_arn
+          service_account = "ebs-csi-controller-sa"
+        }]
+      }
+    },
+    var.enable_efs ? {
+      aws-efs-csi-driver = {
+        pod_identity_association = [{
+          role_arn        = var.efs_csi_role_arn
+          service_account = "efs-csi-controller-sa"
+        }]
+      }
+    } : {},
+    {
+      # Disable Application Signals auto-monitoring to prevent OTEL injection
+      # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
+      # CloudWatch Container Insights and logs still work
+      amazon-cloudwatch-observability = {
+        configuration_values = jsonencode({
+          manager = {
+            applicationSignals = {
+              autoMonitor = {
+                monitorAllServices = false
+              }
             }
           }
-        }
-      })
+        })
+      }
     }
-  }
+  )
 
   tags = var.tags
 }
