@@ -130,7 +130,7 @@ resource "kubernetes_config_map" "infra_config" {
       MINIO_LOGO_BUCKET             = aws_s3_bucket.nvisionx_buckets["companylogo"].bucket
       MINIO_CSV_BUCKET              = aws_s3_bucket.nvisionx_buckets["csvfiles"].bucket
       MINIO_APPLICATION_LOGO_BUCKET = aws_s3_bucket.nvisionx_buckets["applogo"].bucket
-      S3_DOWNLOADS_BUCKET           = aws_s3_bucket.nvisionx_buckets["downloads"].bucket
+      S3_DOWNLOAD_BUCKET            = aws_s3_bucket.nvisionx_buckets["downloads"].bucket
       APPCUES_ACCOUNT_ID            = var.appcues_account_id
       APPCUES_BUNDLE_DOMAIN         = var.appcues_bundle_domain
       APPCUES_API_HOSTNAME          = var.appcues_api_hostname
