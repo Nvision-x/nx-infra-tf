@@ -45,8 +45,9 @@ module "postgresql" {
   source     = "terraform-aws-modules/rds/aws"
   version    = "~> 6.0"
   identifier = var.db_identifier
-  engine     = "postgres"
-  family     = "postgres${var.postgres_version}"
+  engine         = "postgres"
+  engine_version = var.postgres_version
+  family         = "postgres${var.postgres_version}"
 
   instance_class        = var.instance_class
   allocated_storage     = var.allocated_storage
