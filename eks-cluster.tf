@@ -23,10 +23,10 @@ module "eks" {
 
   addons = merge(
     {
-      coredns                = {}
-      eks-pod-identity-agent = {}
-      kube-proxy             = {}
-      vpc-cni                = {}
+      coredns                = { before_compute = true }
+      eks-pod-identity-agent = { before_compute = true }
+      kube-proxy             = { before_compute = true }
+      vpc-cni                = { before_compute = true }
       aws-ebs-csi-driver = {
         # Use Pod Identity instead of IRSA for EBS CSI
         # This replaces the old service_account_role_arn approach
