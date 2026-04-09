@@ -140,11 +140,10 @@ resource "kubernetes_config_map" "infra_config" {
 
     // Add PG & OS only when enabled
     { for k, v in {
-      POSTGRES_HOST             = local.pg_host
-      POSTGRES_USERNAME         = local.pg_username
-      POSTGRES_BACKUP_ROLE_ARN  = var.postgres_backup_role_arn != "" ? var.postgres_backup_role_arn : null
-      OPENSEARCH_HOST           = local.os_host
-      OPENSEARCH_USERNAME       = local.os_username
+      POSTGRES_HOST     = local.pg_host
+      POSTGRES_USERNAME = local.pg_username
+      OPENSEARCH_HOST   = local.os_host
+      OPENSEARCH_USERNAME = local.os_username
     } : k => v if v != null },
 
     var.ingress_internet_facing != null ? { ingress-internet-facing = var.ingress_internet_facing } : {},
