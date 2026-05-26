@@ -943,6 +943,126 @@ variable "bedrock_guardrail_arns" {
   default     = ["arn:aws:bedrock:*:*:guardrail/*"]
 }
 
+# ----------------------------- Neptune Serverless -----------------------
+
+variable "enable_neptune" {
+  description = "Create a Neptune Serverless cluster and related resources"
+  type        = bool
+  default     = false
+}
+
+variable "neptune_cluster_identifier" {
+  description = "Identifier for the Neptune cluster"
+  type        = string
+  default     = ""
+}
+
+variable "neptune_subnet_group_name" {
+  description = "Name for the Neptune DB subnet group"
+  type        = string
+  default     = ""
+}
+
+variable "neptune_security_group_name" {
+  description = "Name for the Neptune security group"
+  type        = string
+  default     = ""
+}
+
+variable "neptune_engine_version" {
+  description = "Neptune engine version. Leave null to let AWS select the default"
+  type        = string
+  default     = null
+}
+
+variable "neptune_min_ncu" {
+  description = "Minimum Neptune Capacity Units for serverless scaling (half-step increments, min 1.0)"
+  type        = number
+  default     = 1.0
+}
+
+variable "neptune_max_ncu" {
+  description = "Maximum Neptune Capacity Units for serverless scaling"
+  type        = number
+  default     = 16.0
+}
+
+variable "neptune_instance_count" {
+  description = "Number of db.serverless instances in the cluster"
+  type        = number
+  default     = 1
+}
+
+variable "neptune_backup_retention_period" {
+  description = "Days to retain Neptune automated backups"
+  type        = number
+  default     = 1
+}
+
+variable "neptune_backup_window" {
+  description = "Preferred Neptune backup window (UTC)"
+  type        = string
+  default     = "07:00-08:00"
+}
+
+variable "neptune_maintenance_window" {
+  description = "Preferred Neptune maintenance window"
+  type        = string
+  default     = "sun:08:30-sun:09:30"
+}
+
+variable "neptune_skip_final_snapshot" {
+  description = "Skip the final snapshot when destroying the Neptune cluster"
+  type        = bool
+  default     = true
+}
+
+variable "neptune_apply_immediately" {
+  description = "Apply Neptune modifications immediately rather than at the next maintenance window"
+  type        = bool
+  default     = false
+}
+
+variable "neptune_deletion_protection" {
+  description = "Enable deletion protection on the Neptune cluster"
+  type        = bool
+  default     = false
+}
+
+# ----------------------------- S3 Vectors -------------------------------
+
+variable "enable_s3_vectors" {
+  description = "Create an S3 Vectors vector bucket for embeddings storage"
+  type        = bool
+  default     = false
+}
+
+variable "s3_vectors_bucket_name" {
+  description = "Name for the S3 Vectors vector bucket"
+  type        = string
+  default     = ""
+}
+
+# ----------------------------- Knowledge Hub Pod Identity ---------------
+
+variable "enable_knowledge_hub_pod_identity" {
+  description = "Create the Pod Identity association for the knowledge-hub workload role"
+  type        = bool
+  default     = false
+}
+
+variable "knowledge_hub_role_arn" {
+  description = "IAM role ARN for the knowledge-hub workload (from nx-iam-tf)"
+  type        = string
+  default     = ""
+}
+
+variable "knowledge_hub_service_account" {
+  description = "namespace:serviceaccount pair for the knowledge-hub workload"
+  type        = string
+  default     = ""
+}
+
 # ----------------------------- Appcues ----------------------------------
 
 variable "appcues_account_id" {
