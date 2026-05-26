@@ -12,13 +12,13 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnets
 
-  endpoint_private_access      = var.cluster_endpoint_private_access
-  endpoint_public_access       = var.cluster_endpoint_public_access
-  endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
-  enable_irsa                  = false # Using Pod Identity instead
-  create_iam_role              = var.create_iam_role
-  iam_role_arn                 = var.cluster_iam_role_arn
-  eks_managed_node_groups      = var.eks_managed_node_groups
+  endpoint_private_access                  = var.cluster_endpoint_private_access
+  endpoint_public_access                   = var.cluster_endpoint_public_access
+  endpoint_public_access_cidrs             = var.cluster_endpoint_public_access_cidrs
+  enable_irsa                              = false # Using Pod Identity instead
+  create_iam_role                          = var.create_iam_role
+  iam_role_arn                             = var.cluster_iam_role_arn
+  eks_managed_node_groups                  = var.eks_managed_node_groups
   enable_cluster_creator_admin_permissions = true
 
   addons = merge(
@@ -108,6 +108,28 @@ resource "aws_eks_access_policy_association" "access_policy" {
   }
 }
 
+resource "aws_eks_access_entry" "argocd_target" {
+  count         = var.argocd_target_role_arn != "" ? 1 : 0
+  cluster_name  = module.eks.cluster_name
+  principal_arn = var.argocd_target_role_arn
+  type          = "STANDARD"
+
+  tags = {
+    Name = "argocd-target-access"
+  }
+}
+
+resource "aws_eks_access_policy_association" "argocd_target" {
+  count         = var.argocd_target_role_arn != "" ? 1 : 0
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = var.argocd_target_role_arn
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 locals {
   pg_host     = var.enable_postgres ? module.postgresql[0].db_instance_address : null
   pg_username = var.enable_postgres ? var.username : null
@@ -140,9 +162,9 @@ resource "kubernetes_config_map" "infra_config" {
 
     // Add PG & OS only when enabled
     { for k, v in {
-      POSTGRES_HOST     = local.pg_host
-      POSTGRES_USERNAME = local.pg_username
-      OPENSEARCH_HOST   = local.os_host
+      POSTGRES_HOST       = local.pg_host
+      POSTGRES_USERNAME   = local.pg_username
+      OPENSEARCH_HOST     = local.os_host
       OPENSEARCH_USERNAME = local.os_username
     } : k => v if v != null },
 

@@ -962,3 +962,15 @@ variable "appcues_api_hostname" {
   type        = string
   default     = "ac.us.nvisionx.ai"
 }
+
+# ----------------------------- ArgoCD -----------------------------------
+
+variable "argocd_target_role_arn" {
+  description = <<-EOF
+    ARN of the cross-account ArgoCD target IAM role to grant cluster-admin
+    access via an EKS access entry. Created in nx-iam-tf. Leave empty to
+    skip the access entry.
+  EOF
+  type        = string
+  default     = ""
+}
