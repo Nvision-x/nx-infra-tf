@@ -66,3 +66,25 @@ output "cloudtrail_kms_key_arn" {
   description = "ARN of KMS key for CloudTrail encryption"
   value       = var.enable_security_hub_controls ? aws_kms_key.cloudtrail[0].arn : null
 }
+
+# --------------------- Content Service S3 Buckets ---------------------
+
+output "raw_content_cache_bucket_name" {
+  description = "Name of S3 bucket for raw content cache (connectors write, Content Service reads)"
+  value       = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].id
+}
+
+output "raw_content_cache_bucket_arn" {
+  description = "ARN of S3 bucket for raw content cache"
+  value       = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].arn
+}
+
+output "text_content_cache_bucket_name" {
+  description = "Name of S3 bucket for text content cache (TIKA output, Content Service read+write)"
+  value       = aws_s3_bucket.nvisionx_buckets["text-content-cache"].id
+}
+
+output "text_content_cache_bucket_arn" {
+  description = "ARN of S3 bucket for text content cache"
+  value       = aws_s3_bucket.nvisionx_buckets["text-content-cache"].arn
+}
