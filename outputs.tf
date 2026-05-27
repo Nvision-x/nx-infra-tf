@@ -67,6 +67,45 @@ output "cloudtrail_kms_key_arn" {
   value       = var.enable_security_hub_controls ? aws_kms_key.cloudtrail[0].arn : null
 }
 
+# --------------------- Neptune Serverless -----------------------------
+
+output "neptune_cluster_endpoint" {
+  description = "Neptune cluster writer endpoint"
+  value       = var.enable_neptune ? aws_neptune_cluster.this[0].endpoint : null
+}
+
+output "neptune_cluster_reader_endpoint" {
+  description = "Neptune cluster reader endpoint"
+  value       = var.enable_neptune ? aws_neptune_cluster.this[0].reader_endpoint : null
+}
+
+output "neptune_cluster_port" {
+  description = "Neptune cluster port"
+  value       = var.enable_neptune ? aws_neptune_cluster.this[0].port : null
+}
+
+output "neptune_cluster_resource_id" {
+  description = "Neptune cluster resource ID — used for IAM neptune-db:* resource ARNs"
+  value       = var.enable_neptune ? aws_neptune_cluster.this[0].cluster_resource_id : null
+}
+
+output "neptune_cluster_arn" {
+  description = "Neptune cluster ARN"
+  value       = var.enable_neptune ? aws_neptune_cluster.this[0].arn : null
+}
+
+# --------------------- S3 Vectors -------------------------------------
+
+output "s3_vectors_bucket_name" {
+  description = "S3 Vectors vector bucket name"
+  value       = var.enable_s3_vectors ? aws_s3vectors_vector_bucket.this[0].vector_bucket_name : null
+}
+
+output "s3_vectors_bucket_arn" {
+  description = "S3 Vectors vector bucket ARN (constructed; the resource doesn't export .arn directly)"
+  value       = var.enable_s3_vectors ? "arn:aws:s3vectors:${var.region}:${data.aws_caller_identity.current.account_id}:bucket/${aws_s3vectors_vector_bucket.this[0].vector_bucket_name}" : null
+}
+
 # --------------------- Content Service S3 Buckets ---------------------
 
 output "raw_content_cache_bucket_name" {
