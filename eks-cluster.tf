@@ -136,6 +136,11 @@ locals {
 
   os_host     = var.enable_opensearch ? module.opensearch[0].domain_endpoint : null
   os_username = var.enable_opensearch ? var.master_user_name : null
+
+  neptune_host = var.enable_neptune ? aws_neptune_cluster.this[0].endpoint : null
+  neptune_port = var.enable_neptune ? tostring(aws_neptune_cluster.this[0].port) : null
+
+  s3_vectors_bucket = var.enable_s3_vectors ? aws_s3vectors_vector_bucket.this[0].vector_bucket_name : null
 }
 
 
@@ -155,17 +160,22 @@ resource "kubernetes_config_map" "infra_config" {
       S3_DOWNLOAD_BUCKET            = aws_s3_bucket.nvisionx_buckets["downloads"].bucket
       S3_POSTGRES_BACKUP_BUCKET     = aws_s3_bucket.nvisionx_buckets["postgres-backup"].bucket
       S3_OPENSEARCH_BACKUP_BUCKET   = aws_s3_bucket.nvisionx_buckets["os-backup"].bucket
+      S3_RAW_CONTENT_CACHE_BUCKET   = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].bucket
+      S3_TEXT_CONTENT_CACHE_BUCKET  = aws_s3_bucket.nvisionx_buckets["text-content-cache"].bucket
       APPCUES_ACCOUNT_ID            = var.appcues_account_id
       APPCUES_BUNDLE_DOMAIN         = var.appcues_bundle_domain
       APPCUES_API_HOSTNAME          = var.appcues_api_hostname
     },
 
-    // Add PG & OS only when enabled
+    // Add PG, OS, Neptune, S3 Vectors only when enabled
     { for k, v in {
       POSTGRES_HOST       = local.pg_host
       POSTGRES_USERNAME   = local.pg_username
       OPENSEARCH_HOST     = local.os_host
       OPENSEARCH_USERNAME = local.os_username
+      NEPTUNE_HOST        = local.neptune_host
+      NEPTUNE_PORT        = local.neptune_port
+      S3_VECTORS_BUCKET   = local.s3_vectors_bucket
     } : k => v if v != null },
 
     var.ingress_internet_facing != null ? { ingress-internet-facing = var.ingress_internet_facing } : {},
@@ -173,7 +183,10 @@ resource "kubernetes_config_map" "infra_config" {
     var.ingress_wafv2_acl_arn != null ? { ingress-wafv2-acl-arn = var.ingress_wafv2_acl_arn } : {},
     var.ingress_host != null ? { ingress-host = var.ingress_host } : {},
     { snapshot-repository-name = var.snapshot_repository_name },
-    { aws-region = var.region }
+    # aws-region kept for backward compat; AWS_REGION added so envFrom works
+    # (envFrom silently skips keys that aren't valid env var names, e.g. hyphenated)
+    { aws-region = var.region },
+    { AWS_REGION = var.region }
   )
 }
 

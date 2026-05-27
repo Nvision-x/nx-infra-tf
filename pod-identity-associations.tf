@@ -106,3 +106,25 @@ resource "aws_eks_pod_identity_association" "bedrock" {
 
   depends_on = [module.eks]
 }
+
+################################################################################
+# Knowledge Hub Pod Identity Association
+################################################################################
+
+locals {
+  knowledge_hub_sa = var.enable_knowledge_hub_pod_identity && var.knowledge_hub_service_account != "" ? {
+    namespace       = split(":", var.knowledge_hub_service_account)[0]
+    service_account = split(":", var.knowledge_hub_service_account)[1]
+  } : null
+}
+
+resource "aws_eks_pod_identity_association" "knowledge_hub" {
+  count = local.knowledge_hub_sa != null ? 1 : 0
+
+  cluster_name    = module.eks.cluster_name
+  namespace       = local.knowledge_hub_sa.namespace
+  service_account = local.knowledge_hub_sa.service_account
+  role_arn        = var.knowledge_hub_role_arn
+
+  depends_on = [module.eks]
+}

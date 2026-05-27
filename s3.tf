@@ -1,6 +1,25 @@
 resource "random_id" "s3_suffix" {
-  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup", "cloudtrail-logs", "downloads"])
+  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup", "cloudtrail-logs", "downloads", "raw-content-cache", "text-content-cache"])
   byte_length = 4
+}
+
+locals {
+  # Buckets that hold immutable, idempotent objects — versioning is unnecessary
+  # and would just accumulate noncurrent versions.
+  unversioned_buckets = ["raw-content-cache", "text-content-cache"]
+
+  # Per-bucket object expiration. Buckets omitted from this map have no
+  # expiration applied:
+  #   - applogo, companylogo, downloads: user-uploaded assets
+  #   - minio, csvfiles: tenant-owned content with no fixed lifetime
+  #   - text-content-cache: indefinite retention requested by the Content Service team
+  bucket_retention_days = {
+    logs                = 30
+    "os-backup"         = 180
+    "postgres-backup"   = 180
+    "cloudtrail-logs"   = 180
+    "raw-content-cache" = 1
+  }
 }
 
 resource "aws_s3_bucket" "nvisionx_buckets" {
@@ -16,7 +35,7 @@ resource "aws_s3_bucket" "nvisionx_buckets" {
 }
 
 resource "aws_s3_bucket_versioning" "nvisionx_buckets" {
-  for_each = aws_s3_bucket.nvisionx_buckets
+  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if !contains(local.unversioned_buckets, k) }
 
   bucket = each.value.id
 
@@ -49,7 +68,7 @@ resource "aws_s3_bucket_public_access_block" "nvisionx_buckets" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
-  for_each = aws_s3_bucket.nvisionx_buckets
+  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if contains(keys(local.bucket_retention_days), k) }
 
   bucket = each.value.id
 
@@ -60,7 +79,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
     filter {}
 
     expiration {
-      days = 180
+      days = local.bucket_retention_days[each.key]
     }
   }
 }
