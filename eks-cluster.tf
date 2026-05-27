@@ -159,7 +159,10 @@ resource "kubernetes_config_map" "infra_config" {
     var.ingress_wafv2_acl_arn != null ? { ingress-wafv2-acl-arn = var.ingress_wafv2_acl_arn } : {},
     var.ingress_host != null ? { ingress-host = var.ingress_host } : {},
     { snapshot-repository-name = var.snapshot_repository_name },
-    { aws-region = var.region }
+    # aws-region kept for backward compat; AWS_REGION added so envFrom works
+    # (envFrom silently skips keys that aren't valid env var names, e.g. hyphenated)
+    { aws-region = var.region },
+    { AWS_REGION = var.region }
   )
 }
 
