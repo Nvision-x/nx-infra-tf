@@ -105,3 +105,25 @@ output "s3_vectors_bucket_arn" {
   description = "S3 Vectors vector bucket ARN (constructed; the resource doesn't export .arn directly)"
   value       = var.enable_s3_vectors ? "arn:aws:s3vectors:${var.region}:${data.aws_caller_identity.current.account_id}:bucket/${aws_s3vectors_vector_bucket.this[0].vector_bucket_name}" : null
 }
+
+# --------------------- Content Service S3 Buckets ---------------------
+
+output "raw_content_cache_bucket_name" {
+  description = "Name of S3 bucket for raw content cache (connectors write, Content Service reads)"
+  value       = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].id
+}
+
+output "raw_content_cache_bucket_arn" {
+  description = "ARN of S3 bucket for raw content cache"
+  value       = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].arn
+}
+
+output "text_content_cache_bucket_name" {
+  description = "Name of S3 bucket for text content cache (TIKA output, Content Service read+write)"
+  value       = aws_s3_bucket.nvisionx_buckets["text-content-cache"].id
+}
+
+output "text_content_cache_bucket_arn" {
+  description = "ARN of S3 bucket for text content cache"
+  value       = aws_s3_bucket.nvisionx_buckets["text-content-cache"].arn
+}
