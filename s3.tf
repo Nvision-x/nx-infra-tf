@@ -8,18 +8,17 @@ locals {
   # and would just accumulate noncurrent versions.
   unversioned_buckets = ["raw-content-cache", "text-content-cache"]
 
-  # Per-bucket object expiration. Buckets omitted from this map (applogo,
-  # companylogo, downloads) hold user-uploaded assets that must persist for
-  # the life of the tenant — no expiration is applied.
+  # Per-bucket object expiration. Buckets omitted from this map have no
+  # expiration applied:
+  #   - applogo, companylogo, downloads: user-uploaded assets
+  #   - minio, csvfiles: tenant-owned content with no fixed lifetime
+  #   - text-content-cache: indefinite retention requested by the Content Service team
   bucket_retention_days = {
-    logs                 = 30
-    minio                = 180
-    csvfiles             = 180
-    "os-backup"          = 180
-    "postgres-backup"    = 180
-    "cloudtrail-logs"    = 180
-    "raw-content-cache"  = 7
-    "text-content-cache" = 14
+    logs                = 30
+    "os-backup"         = 180
+    "postgres-backup"   = 180
+    "cloudtrail-logs"   = 180
+    "raw-content-cache" = 7
   }
 }
 
