@@ -101,7 +101,9 @@ resource "aws_iam_policy" "neptune_connect" {
 }
 
 resource "aws_iam_role_policy_attachment" "knowledge_hub_neptune" {
-  count      = var.enable_neptune && var.enable_knowledge_hub_pod_identity && var.knowledge_hub_role_arn != "" ? 1 : 0
+  # count uses only plan-time-known vars; consumer must pass a real role ARN
+  # when enable_knowledge_hub_pod_identity is true, else the split fails at apply.
+  count      = var.enable_neptune && var.enable_knowledge_hub_pod_identity ? 1 : 0
   role       = split("/", var.knowledge_hub_role_arn)[1]
   policy_arn = aws_iam_policy.neptune_connect[0].arn
 }
