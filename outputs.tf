@@ -102,6 +102,6 @@ output "s3_vectors_bucket_name" {
 }
 
 output "s3_vectors_bucket_arn" {
-  description = "S3 Vectors vector bucket ARN"
-  value       = var.enable_s3_vectors ? aws_s3vectors_vector_bucket.this[0].arn : null
+  description = "S3 Vectors vector bucket ARN (constructed; the resource doesn't export .arn directly)"
+  value       = var.enable_s3_vectors ? "arn:aws:s3vectors:${var.region}:${data.aws_caller_identity.current.account_id}:bucket/${aws_s3vectors_vector_bucket.this[0].vector_bucket_name}" : null
 }
