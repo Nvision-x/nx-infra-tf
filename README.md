@@ -170,6 +170,17 @@ module "nx" {
 
 ---
 
+## Manual prerequisites
+
+A few things this module does not (and cannot) do for you:
+
+- **S3 Vectors indexes** — `aws_s3vectors_vector_bucket` creates the bucket only. Indexes carry dimension and distance-metric choices that are per-use-case and belong with the application that owns the data; create them from the app (boto3 / SDK) or with a small bootstrap script.
+- **Neptune IAM-auth bootstrap** — Newly created Neptune clusters need an initial role/identity mapped to the database. The cluster comes up with IAM auth enabled but no app principal granted; load the first identity from a bastion or one-shot pod using `awscurl` / the Neptune CLI.
+
+> Bedrock note: AWS no longer requires a per-model console grant to invoke foundation models — IAM permissions alone are sufficient.
+
+---
+
 ## Requirements
 
 | Name | Version |
