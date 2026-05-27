@@ -18,7 +18,7 @@ locals {
     "os-backup"         = 180
     "postgres-backup"   = 180
     "cloudtrail-logs"   = 180
-    "raw-content-cache" = 7
+    "raw-content-cache" = 1
   }
 }
 
