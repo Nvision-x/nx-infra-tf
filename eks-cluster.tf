@@ -138,6 +138,8 @@ resource "kubernetes_config_map" "infra_config" {
       S3_DOWNLOAD_BUCKET            = aws_s3_bucket.nvisionx_buckets["downloads"].bucket
       S3_POSTGRES_BACKUP_BUCKET     = aws_s3_bucket.nvisionx_buckets["postgres-backup"].bucket
       S3_OPENSEARCH_BACKUP_BUCKET   = aws_s3_bucket.nvisionx_buckets["os-backup"].bucket
+      S3_RAW_CONTENT_CACHE_BUCKET   = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].bucket
+      S3_TEXT_CONTENT_CACHE_BUCKET  = aws_s3_bucket.nvisionx_buckets["text-content-cache"].bucket
       APPCUES_ACCOUNT_ID            = var.appcues_account_id
       APPCUES_BUNDLE_DOMAIN         = var.appcues_bundle_domain
       APPCUES_API_HOSTNAME          = var.appcues_api_hostname
