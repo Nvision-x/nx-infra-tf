@@ -96,9 +96,9 @@ variable "eks_managed_node_groups" {
 
 # variables.tf
 variable "eks_access_principal_arn" {
-  description = "IAM Role or User ARN to grant access to the EKS cluster"
-  type        = string
-  default     = null
+  description = "Set of IAM Role or User ARNs to grant cluster-admin access to the EKS cluster (each one becomes an access entry + AmazonEKSClusterAdminPolicy association)"
+  type        = set(string)
+  default     = []
 }
 
 variable "namespace" {
@@ -1081,16 +1081,4 @@ variable "appcues_api_hostname" {
   description = "Appcues API hostname"
   type        = string
   default     = "ac.us.nvisionx.ai"
-}
-
-# ----------------------------- ArgoCD -----------------------------------
-
-variable "argocd_target_role_arn" {
-  description = <<-EOF
-    ARN of the cross-account ArgoCD target IAM role to grant cluster-admin
-    access via an EKS access entry. Created in nx-iam-tf. Leave empty to
-    skip the access entry.
-  EOF
-  type        = string
-  default     = ""
 }

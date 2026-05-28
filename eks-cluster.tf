@@ -87,43 +87,17 @@ resource "aws_security_group_rule" "eks_nodes_all_vpc_ingress" {
 }
 
 resource "aws_eks_access_entry" "access" {
-  count         = var.eks_access_principal_arn != null ? 1 : 0
+  for_each      = var.eks_access_principal_arn
   cluster_name  = module.eks.cluster_name
-  principal_arn = var.eks_access_principal_arn
+  principal_arn = each.value
   type          = "STANDARD"
-
-  tags = {
-    Name = "admin-access"
-  }
 }
 
 resource "aws_eks_access_policy_association" "access_policy" {
-  count         = var.eks_access_principal_arn != null ? 1 : 0
+  for_each      = var.eks_access_principal_arn
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = var.eks_access_principal_arn
-
-  access_scope {
-    type = "cluster"
-  }
-}
-
-resource "aws_eks_access_entry" "argocd_target" {
-  count         = var.argocd_target_role_arn != "" ? 1 : 0
-  cluster_name  = module.eks.cluster_name
-  principal_arn = var.argocd_target_role_arn
-  type          = "STANDARD"
-
-  tags = {
-    Name = "argocd-target-access"
-  }
-}
-
-resource "aws_eks_access_policy_association" "argocd_target" {
-  count         = var.argocd_target_role_arn != "" ? 1 : 0
-  cluster_name  = module.eks.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = var.argocd_target_role_arn
+  principal_arn = each.value
 
   access_scope {
     type = "cluster"
