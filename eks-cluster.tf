@@ -23,7 +23,10 @@ module "eks" {
 
   addons = merge(
     {
-      coredns                = { before_compute = true }
+      coredns = merge(
+        { before_compute = true },
+        var.coredns_configuration_values != null ? { configuration_values = var.coredns_configuration_values } : {}
+      )
       eks-pod-identity-agent = { before_compute = true }
       kube-proxy             = { before_compute = true }
       vpc-cni                = { before_compute = true }

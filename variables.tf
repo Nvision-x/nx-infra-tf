@@ -101,6 +101,12 @@ variable "eks_access_principal_arn" {
   default     = null
 }
 
+variable "coredns_configuration_values" {
+  description = "Optional JSON-encoded configuration_values for the EKS coredns add-on. Use to customise the Corefile (e.g. forward zones to on-prem DNS). When null, the add-on runs with its default configuration."
+  type        = string
+  default     = null
+}
+
 variable "namespace" {
   description = "Namespace where resources will be created"
   type        = string
