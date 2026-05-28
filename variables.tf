@@ -96,9 +96,9 @@ variable "eks_managed_node_groups" {
 
 # variables.tf
 variable "eks_access_principal_arn" {
-  description = "Set of IAM Role or User ARNs to grant cluster-admin access to the EKS cluster (each one becomes an access entry + AmazonEKSClusterAdminPolicy association)"
-  type        = set(string)
-  default     = []
+  description = "Map of named IAM Role/User ARNs to grant cluster-admin access. Keys are arbitrary stable identifiers (e.g., \"admin\", \"argocd\"); values are the ARNs. Each entry becomes an access entry + AmazonEKSClusterAdminPolicy association. Map (not set) so callers can pass apply-time-unknown ARNs (e.g., from a sibling resource) without breaking for_each."
+  type        = map(string)
+  default     = {}
 }
 
 variable "namespace" {
