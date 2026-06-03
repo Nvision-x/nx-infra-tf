@@ -89,11 +89,38 @@ resource "aws_security_group_rule" "eks_nodes_all_vpc_ingress" {
   description       = "Allow all traffic from within VPC for node-to-node/pod-to-pod communication"
 }
 
+# This resource was migrated from `count` (single principal, address `[0]`) to
+# `for_each` (map keyed by name). Without the moved blocks below, Terraform reads
+# the address change `[0]` -> `["admin"]` as destroy+recreate, which deletes the
+# admin EKS access entry mid-apply and locks operators out of the cluster. The
+# moved blocks carry the existing object to the new key instead. They assume the
+# previously-single principal is passed under the map key "admin" (the convention
+# in the root configs); an env that used a different key must adjust accordingly.
+# Already-migrated states have nothing at `[0]`, so the moved block is a safe no-op.
+moved {
+  from = aws_eks_access_entry.access[0]
+  to   = aws_eks_access_entry.access["admin"]
+}
+
+moved {
+  from = aws_eks_access_policy_association.access_policy[0]
+  to   = aws_eks_access_policy_association.access_policy["admin"]
+}
+
 resource "aws_eks_access_entry" "access" {
   for_each      = var.eks_access_principal_arn
   cluster_name  = module.eks.cluster_name
   principal_arn = each.value
   type          = "STANDARD"
+
+  # Guardrail: refuse to destroy an admin access entry. A future address change
+  # or an accidental removal will then fail the plan loudly instead of silently
+  # revoking cluster access (the failure mode that originally locked us out). To
+  # intentionally revoke a principal, remove it from the map AND drop this block
+  # in the same change.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_eks_access_policy_association" "access_policy" {
