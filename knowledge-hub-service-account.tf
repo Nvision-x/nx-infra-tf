@@ -32,13 +32,3 @@ resource "kubernetes_service_account" "knowledge_hub" {
     ignore_changes = [metadata[0].labels, metadata[0].annotations]
   }
 }
-
-# Adopt the SA if it was created out-of-band (e.g. manual kubectl create sa
-# before this resource existed in TF). Safe no-op once the SA is in state.
-# Uses for_each so envs with the feature disabled (count=0) don't try to
-# import into a non-existent resource index.
-import {
-  for_each = local.knowledge_hub_sa_create ? { adopt = "${local.knowledge_hub_sa_ns}/${local.knowledge_hub_sa_name}" } : {}
-  to       = kubernetes_service_account.knowledge_hub[0]
-  id       = each.value
-}
