@@ -12,13 +12,13 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnets
 
-  endpoint_private_access      = var.cluster_endpoint_private_access
-  endpoint_public_access       = var.cluster_endpoint_public_access
-  endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
-  enable_irsa                  = false # Using Pod Identity instead
-  create_iam_role              = var.create_iam_role
-  iam_role_arn                 = var.cluster_iam_role_arn
-  eks_managed_node_groups      = var.eks_managed_node_groups
+  endpoint_private_access                  = var.cluster_endpoint_private_access
+  endpoint_public_access                   = var.cluster_endpoint_public_access
+  endpoint_public_access_cidrs             = var.cluster_endpoint_public_access_cidrs
+  enable_irsa                              = false # Using Pod Identity instead
+  create_iam_role                          = var.create_iam_role
+  iam_role_arn                             = var.cluster_iam_role_arn
+  eks_managed_node_groups                  = var.eks_managed_node_groups
   enable_cluster_creator_admin_permissions = true
 
   addons = merge(
@@ -90,21 +90,17 @@ resource "aws_security_group_rule" "eks_nodes_all_vpc_ingress" {
 }
 
 resource "aws_eks_access_entry" "access" {
-  count         = var.eks_access_principal_arn != null ? 1 : 0
+  for_each      = var.eks_access_principal_arn
   cluster_name  = module.eks.cluster_name
-  principal_arn = var.eks_access_principal_arn
+  principal_arn = each.value
   type          = "STANDARD"
-
-  tags = {
-    Name = "admin-access"
-  }
 }
 
 resource "aws_eks_access_policy_association" "access_policy" {
-  count         = var.eks_access_principal_arn != null ? 1 : 0
+  for_each      = var.eks_access_principal_arn
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = var.eks_access_principal_arn
+  principal_arn = each.value
 
   access_scope {
     type = "cluster"
