@@ -1069,6 +1069,12 @@ variable "knowledge_hub_service_account" {
   default     = ""
 }
 
+variable "create_knowledge_hub_service_account" {
+  description = "Create the Kubernetes ServiceAccount for knowledge-hub. Defaults to true so the Pod Identity association has something to bind to. Set false if the workload's Helm chart owns the SA."
+  type        = bool
+  default     = true
+}
+
 # ----------------------------- Appcues ----------------------------------
 
 variable "appcues_account_id" {
