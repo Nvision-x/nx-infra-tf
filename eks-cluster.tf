@@ -262,27 +262,5 @@ resource "kubernetes_storage_class_v1" "gp3" {
   }
 }
 
-# Migrate state from the deprecated unsuffixed kubernetes_* resources to their
-# _v1 equivalents without recreation.
-moved {
-  from = kubernetes_config_map.infra_config
-  to   = kubernetes_config_map_v1.infra_config
-}
-
-moved {
-  from = kubernetes_secret.infra_secrets
-  to   = kubernetes_secret_v1.infra_secrets
-}
-
-moved {
-  from = kubernetes_secret.docker_hub
-  to   = kubernetes_secret_v1.docker_hub
-}
-
-moved {
-  from = kubernetes_secret.github_cr
-  to   = kubernetes_secret_v1.github_cr
-}
-
 
 
