@@ -155,6 +155,7 @@ module "nx" {
 | `opensearch_coordinator_instance_type` | Coordinator node instance type | `""` |
 | `opensearch_ebs_iops` | EBS provisioned IOPS | `null` |
 | `opensearch_ebs_throughput` | EBS throughput (MiB/s) for gp3 | `null` |
+| `opensearch_advanced_options` | Extra `advanced_options` merged over computed defaults (consumer keys win); codify overrides like `override_main_response_version` to avoid phantom drift | `{}` |
 
 ---
 

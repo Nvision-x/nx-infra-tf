@@ -46,9 +46,12 @@ locals {
     "rest.action.multi.allow_explicit_index" = "true"
   }
 
-  advanced_options = local.supports_override_response_version ? merge(local.advanced_options_base, {
+  advanced_options_computed = local.supports_override_response_version ? merge(local.advanced_options_base, {
     "override_main_response_version" = "false"
   }) : local.advanced_options_base
+
+  # Consumer-supplied overrides win over the computed defaults.
+  advanced_options = merge(local.advanced_options_computed, var.opensearch_advanced_options)
 }
 
 # OpenSearch module configuration
