@@ -578,6 +578,12 @@ variable "engine_version" {
   type        = string
 }
 
+variable "opensearch_advanced_options" {
+  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). Use to codify operational overrides such as override_main_response_version that would otherwise show as perpetual phantom drift (OpenSearch UpdateDomainConfig has PATCH, not REPLACE, semantics for advancedOptions)."
+  type        = map(string)
+  default     = {}
+}
+
 variable "enable_masternodes" {
   description = "Enable master nodes for OpenSearch"
   type        = bool
