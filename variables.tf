@@ -88,6 +88,12 @@ variable "create_iam_role" {
   default     = false
 }
 
+variable "enable_cluster_creator_admin_permissions" {
+  description = "Grant the identity running terraform a cluster-admin access entry. Set to false when plan and apply run as different IAM principals (e.g. separate CI plan/apply roles) to avoid perpetual access-entry + KMS key policy drift; manage admin access explicitly via eks_access_principal_arn instead."
+  type        = bool
+  default     = true
+}
+
 variable "eks_managed_node_groups" {
   description = "Map of EKS managed node group definitions to create"
   type        = any
@@ -576,6 +582,12 @@ variable "ebs_volume_size" {
 variable "engine_version" {
   description = "The version of the OpenSearch engine"
   type        = string
+}
+
+variable "opensearch_advanced_options" {
+  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). Use to codify operational overrides such as override_main_response_version that would otherwise show as perpetual phantom drift (OpenSearch UpdateDomainConfig has PATCH, not REPLACE, semantics for advancedOptions)."
+  type        = map(string)
+  default     = {}
 }
 
 variable "enable_masternodes" {

@@ -123,6 +123,7 @@ module "nx" {
 | `cluster_iam_role_arn` | Cluster IAM role ARN | - |
 | `create_iam_role` | Create cluster IAM role (false if using nx-iam-tf) | `false` |
 | `eks_managed_node_groups` | Map of node group definitions | `{}` |
+| `enable_cluster_creator_admin_permissions` | Grant the identity running terraform cluster-admin; set `false` to avoid access-entry/KMS drift when plan/apply use different IAM principals | `true` |
 | `enable_efs` | Enable EFS filesystem and CSI driver | `false` |
 
 ### Pod Identity Role ARNs
@@ -154,6 +155,7 @@ module "nx" {
 | `opensearch_coordinator_instance_type` | Coordinator node instance type | `""` |
 | `opensearch_ebs_iops` | EBS provisioned IOPS | `null` |
 | `opensearch_ebs_throughput` | EBS throughput (MiB/s) for gp3 | `null` |
+| `opensearch_advanced_options` | Extra `advanced_options` merged over computed defaults (consumer keys win); codify overrides like `override_main_response_version` to avoid phantom drift | `{}` |
 
 ---
 
