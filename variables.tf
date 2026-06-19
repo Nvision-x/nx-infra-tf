@@ -88,6 +88,12 @@ variable "create_iam_role" {
   default     = false
 }
 
+variable "enable_cluster_creator_admin_permissions" {
+  description = "Grant the identity running terraform a cluster-admin access entry. Set to false when plan and apply run as different IAM principals (e.g. separate CI plan/apply roles) to avoid perpetual access-entry + KMS key policy drift; manage admin access explicitly via eks_access_principal_arn instead."
+  type        = bool
+  default     = true
+}
+
 variable "eks_managed_node_groups" {
   description = "Map of EKS managed node group definitions to create"
   type        = any

@@ -19,7 +19,7 @@ module "eks" {
   create_iam_role                          = var.create_iam_role
   iam_role_arn                             = var.cluster_iam_role_arn
   eks_managed_node_groups                  = var.eks_managed_node_groups
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 
   addons = merge(
     {
