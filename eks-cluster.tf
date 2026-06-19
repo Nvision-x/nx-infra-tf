@@ -121,7 +121,7 @@ locals {
 }
 
 
-resource "kubernetes_config_map" "infra_config" {
+resource "kubernetes_config_map_v1" "infra_config" {
   metadata {
     name      = "infra-config"
     namespace = "default"
@@ -168,7 +168,7 @@ resource "kubernetes_config_map" "infra_config" {
 }
 
 
-resource "kubernetes_secret" "infra_secrets" {
+resource "kubernetes_secret_v1" "infra_secrets" {
   count = var.enable_postgres && var.enable_opensearch ? 1 : 0
 
   metadata {
@@ -209,7 +209,7 @@ locals {
   })
 }
 
-resource "kubernetes_secret" "docker_hub" {
+resource "kubernetes_secret_v1" "docker_hub" {
   count = length(trimspace(var.docker_hub_username)) > 0 && length(trimspace(var.docker_hub_token)) > 0 ? 1 : 0
 
   metadata {
@@ -225,7 +225,7 @@ resource "kubernetes_secret" "docker_hub" {
   }
 }
 
-resource "kubernetes_secret" "github_cr" {
+resource "kubernetes_secret_v1" "github_cr" {
   count = length(trimspace(var.github_cr_username)) > 0 && length(trimspace(var.github_cr_token)) > 0 ? 1 : 0
 
   metadata {
@@ -262,8 +262,27 @@ resource "kubernetes_storage_class_v1" "gp3" {
   }
 }
 
+# Migrate state from the deprecated unsuffixed kubernetes_* resources to their
+# _v1 equivalents without recreation.
+moved {
+  from = kubernetes_config_map.infra_config
+  to   = kubernetes_config_map_v1.infra_config
+}
 
+moved {
+  from = kubernetes_secret.infra_secrets
+  to   = kubernetes_secret_v1.infra_secrets
+}
 
+moved {
+  from = kubernetes_secret.docker_hub
+  to   = kubernetes_secret_v1.docker_hub
+}
+
+moved {
+  from = kubernetes_secret.github_cr
+  to   = kubernetes_secret_v1.github_cr
+}
 
 
 
