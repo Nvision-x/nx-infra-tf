@@ -43,6 +43,15 @@ locals {
   # When monitoring is enabled a topic always exists (created or caller-supplied).
   monitoring_slack_enabled = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != ""
 
+  # Encrypt the topic we create (Security Hub SNS.1). Use a caller-supplied key
+  # if given, otherwise a customer-managed CMK created here. A CMK (not the
+  # AWS-managed alias/aws/sns) is required so the key policy can grant
+  # CloudWatch permission to publish to the encrypted topic.
+  monitoring_create_kms = local.monitoring_create_sns && var.monitoring_kms_key_id == ""
+  monitoring_kms_key_id = var.monitoring_kms_key_id != "" ? var.monitoring_kms_key_id : (
+    local.monitoring_create_kms ? aws_kms_key.monitoring[0].id : null
+  )
+
   # Expected reachable OpenSearch node count (data + master + coordinator) unless overridden.
   os_expected_nodes = var.opensearch_min_nodes_threshold > 0 ? var.opensearch_min_nodes_threshold : (
     var.number_of_nodes
@@ -58,13 +67,52 @@ locals {
 # SNS topic + subscriptions
 ################################################################################
 
-resource "aws_sns_topic" "monitoring" {
-  count = local.monitoring_create_sns ? 1 : 0
-  name  = "${local.monitoring_name}-cloudwatch-alarms"
-  tags  = var.tags
+# Customer-managed KMS key encrypting the alarm topic (Security Hub SNS.1).
+# Rotation on (KMS.4). Policy grants the account plus CloudWatch (so alarms can
+# publish to the encrypted topic — the AWS-managed SNS key can't be granted this).
+resource "aws_kms_key" "monitoring" {
+  count                   = local.monitoring_create_kms ? 1 : 0
+  description             = "Encrypts the ${local.monitoring_name} CloudWatch alarm SNS topic"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "EnableRootPermissions"
+        Effect    = "Allow"
+        Principal = { AWS = "arn:aws:iam::${local.monitoring_account_id}:root" }
+        Action    = "kms:*"
+        Resource  = "*"
+      },
+      {
+        Sid       = "AllowCloudWatchAlarmsUseOfKey"
+        Effect    = "Allow"
+        Principal = { Service = "cloudwatch.amazonaws.com" }
+        Action    = ["kms:GenerateDataKey*", "kms:Decrypt"]
+        Resource  = "*"
+      }
+    ]
+  })
+
+  tags = var.tags
 }
 
-# Allow CloudWatch alarms to publish to the topic.
+resource "aws_kms_alias" "monitoring" {
+  count         = local.monitoring_create_kms ? 1 : 0
+  name          = "alias/${local.monitoring_name}-monitoring-alarms"
+  target_key_id = aws_kms_key.monitoring[0].key_id
+}
+
+resource "aws_sns_topic" "monitoring" {
+  count             = local.monitoring_create_sns ? 1 : 0
+  name              = "${local.monitoring_name}-cloudwatch-alarms"
+  kms_master_key_id = local.monitoring_kms_key_id
+  tags              = var.tags
+}
+
+# Allow CloudWatch alarms to publish (scoped to this account) and deny non-TLS.
 data "aws_iam_policy_document" "monitoring_sns" {
   count = local.monitoring_create_sns ? 1 : 0
 
@@ -81,6 +129,22 @@ data "aws_iam_policy_document" "monitoring_sns" {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
       values   = [local.monitoring_account_id]
+    }
+  }
+
+  statement {
+    sid       = "DenyNonTLS"
+    effect    = "Deny"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.monitoring[0].arn]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
     }
   }
 }

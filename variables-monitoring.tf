@@ -76,6 +76,12 @@ variable "monitoring_sns_topic_arn" {
   default     = ""
 }
 
+variable "monitoring_kms_key_id" {
+  description = "KMS key id/ARN to encrypt the module-created alarm SNS topic (Security Hub SNS.1). Empty creates a customer-managed key with rotation enabled. Ignored when monitoring_sns_topic_arn is set."
+  type        = string
+  default     = ""
+}
+
 variable "monitoring_alarm_emails" {
   description = "Email addresses subscribed to the alarm SNS topic (only used when this module creates the topic). Each requires a one-time confirmation click."
   type        = list(string)
