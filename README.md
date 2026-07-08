@@ -169,6 +169,62 @@ module "nx" {
 | `efs_file_system_id` | EFS filesystem ID |
 | `private_key_pem` | NFS EC2 private key (sensitive) |
 | `bastion_private_key_pem` | Bastion EC2 private key (sensitive) |
+| `monitoring_sns_topic_arn` | Alarm SNS topic ARN (null when monitoring disabled) |
+| `monitoring_dashboard_name` | CloudWatch dashboard name (null when disabled) |
+
+---
+
+## Monitoring
+
+CloudWatch alarms for every stateful / operationally-critical resource, wired to
+an SNS topic that fans out to email and to Slack via Amazon Q Developer in chat
+applications (formerly AWS Chatbot). All monitoring variables live in
+[`variables-monitoring.tf`](variables-monitoring.tf); resources in
+[`cloudwatch-monitoring.tf`](cloudwatch-monitoring.tf).
+
+Disabled by default (`enable_monitoring = false`) so it never surprises
+non-production consumers of this module — production turns it on.
+
+```hcl
+# --- turn on monitoring (production) ---
+enable_monitoring       = true
+monitoring_alarm_emails = ["devops@nvisionx.ai"]
+
+# Slack via Amazon Q / AWS Chatbot (one-time workspace auth in console — see below)
+monitoring_slack_workspace_id = "T0XXXXXXX"
+monitoring_slack_channel_id   = "C0XXXXXXX"
+
+# Tune any threshold (all have sane defaults)
+rds_cpu_threshold                 = 85
+opensearch_jvm_pressure_threshold = 80
+```
+
+**What's alarmed**
+
+- **EKS / Container Insights** — node CPU / memory / disk, failed-node count (via the `amazon-cloudwatch-observability` addon this module installs)
+- **RDS** — CPU, freeable memory, free storage, connections, read/write latency, disk queue depth, swap
+- **OpenSearch** — cluster status red/yellow, free storage, CPU, JVM & old-gen pressure, writes-blocked, node count, snapshot failure, KMS error, 5xx; plus dedicated-master CPU / JVM / reachability
+- **Neptune** — CPU, serverless capacity vs the NCU ceiling, request-queue backlog
+- **EC2 bastion / NFS** — status-check failures, CPU
+- **EFS** — PercentIOLimit
+
+Every category has its own enable/disable flag (`monitoring_rds_enabled`, etc.),
+and an alarm is created only when monitoring is on **and** the underlying
+resource is enabled. An optional single-pane dashboard
+(`enable_monitoring_dashboard`, default on) summarizes everything.
+
+**Slack delivery — Amazon Q / AWS Chatbot**
+
+Set `monitoring_slack_workspace_id` + `monitoring_slack_channel_id`. Amazon Q
+subscribes to the SNS topic natively (no Lambda). It requires a **one-time**
+manual step that can't be done in Terraform: in the Amazon Q Developer / AWS
+Chatbot console, add the AWS app to your Slack workspace and authorize it, then
+copy the workspace (team) ID and channel ID into the two variables. Until both
+IDs are set, the SNS pipeline still deploys and the channel config is skipped.
+
+> Amazon Q / Chatbot uses the Slack **app** (OAuth), not an incoming webhook —
+> there's no webhook URL to configure. A read-only guardrail is applied so chat
+> can view but never mutate resources.
 
 ---
 
