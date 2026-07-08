@@ -37,6 +37,12 @@ locals {
   ))
   monitoring_ok_actions = var.monitoring_notify_on_ok ? local.monitoring_alarm_actions : []
 
+  # Plan-time-known gate for the Amazon Q / Chatbot Slack config. Must NOT
+  # reference monitoring_sns_arn: when the topic is created in the same apply
+  # its ARN is unknown at plan time, which would make count indeterminate.
+  # When monitoring is enabled a topic always exists (created or caller-supplied).
+  monitoring_slack_enabled = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != ""
+
   # Expected reachable OpenSearch node count (data + master + coordinator) unless overridden.
   os_expected_nodes = var.opensearch_min_nodes_threshold > 0 ? var.opensearch_min_nodes_threshold : (
     var.number_of_nodes
@@ -100,7 +106,7 @@ resource "aws_sns_topic_subscription" "monitoring_email" {
 ################################################################################
 
 data "aws_iam_policy_document" "monitoring_chatbot_assume" {
-  count = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != "" ? 1 : 0
+  count = local.monitoring_slack_enabled ? 1 : 0
 
   statement {
     effect  = "Allow"
@@ -113,7 +119,7 @@ data "aws_iam_policy_document" "monitoring_chatbot_assume" {
 }
 
 resource "aws_iam_role" "monitoring_chatbot" {
-  count              = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != "" ? 1 : 0
+  count              = local.monitoring_slack_enabled ? 1 : 0
   name               = "${local.monitoring_name}-chatbot-alarms"
   assume_role_policy = data.aws_iam_policy_document.monitoring_chatbot_assume[0].json
   tags               = var.tags
@@ -121,13 +127,13 @@ resource "aws_iam_role" "monitoring_chatbot" {
 
 # Notifications-only: read-only visibility, no mutating actions from chat.
 resource "aws_iam_role_policy_attachment" "monitoring_chatbot_readonly" {
-  count      = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != "" ? 1 : 0
+  count      = local.monitoring_slack_enabled ? 1 : 0
   role       = aws_iam_role.monitoring_chatbot[0].name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
 }
 
 resource "aws_chatbot_slack_channel_configuration" "monitoring" {
-  count = var.enable_monitoring && var.monitoring_slack_workspace_id != "" && var.monitoring_slack_channel_id != "" && local.monitoring_sns_arn != null ? 1 : 0
+  count = local.monitoring_slack_enabled ? 1 : 0
 
   configuration_name    = "${local.monitoring_name}-alarms"
   iam_role_arn          = aws_iam_role.monitoring_chatbot[0].arn
