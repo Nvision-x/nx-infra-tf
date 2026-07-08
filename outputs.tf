@@ -50,6 +50,18 @@ output "efs_file_system_id" {
   value       = var.enable_efs ? aws_efs_file_system.this[0].id : null
 }
 
+# --------------------- Monitoring -----------------------------
+
+output "monitoring_sns_topic_arn" {
+  description = "ARN of the CloudWatch alarm SNS topic (module-created or the caller-supplied one). Null when monitoring is disabled."
+  value       = local.monitoring_sns_arn
+}
+
+output "monitoring_dashboard_name" {
+  description = "Name of the CloudWatch monitoring dashboard, if created"
+  value       = var.enable_monitoring && var.enable_monitoring_dashboard && length(local.dashboard_widget_specs) > 0 ? aws_cloudwatch_dashboard.monitoring[0].dashboard_name : null
+}
+
 # --------------------- CloudTrail (for security baseline) -----------------------------
 
 output "cloudtrail_bucket_name" {
