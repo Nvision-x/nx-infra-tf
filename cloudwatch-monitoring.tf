@@ -534,12 +534,12 @@ resource "aws_cloudwatch_metric_alarm" "opensearch_jvm_pressure" {
   namespace           = "AWS/ES"
   metric_name         = "JVMMemoryPressure"
   dimensions          = { DomainName = var.domain_name, ClientId = local.monitoring_account_id }
-  statistic           = "Maximum"
+  statistic           = var.opensearch_jvm_pressure_statistic
   comparison_operator = "GreaterThanThreshold"
   threshold           = var.opensearch_jvm_pressure_threshold
-  period              = var.monitoring_alarm_period
-  evaluation_periods  = var.monitoring_alarm_evaluation_periods
-  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  period              = var.opensearch_jvm_pressure_period != null ? var.opensearch_jvm_pressure_period : var.monitoring_alarm_period
+  evaluation_periods  = var.opensearch_jvm_pressure_evaluation_periods != null ? var.opensearch_jvm_pressure_evaluation_periods : var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.opensearch_jvm_pressure_datapoints_to_alarm != null ? var.opensearch_jvm_pressure_datapoints_to_alarm : var.monitoring_datapoints_to_alarm
   treat_missing_data  = var.monitoring_treat_missing_data
   alarm_actions       = local.monitoring_alarm_actions
   ok_actions          = local.monitoring_ok_actions

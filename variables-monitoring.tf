@@ -252,6 +252,35 @@ variable "opensearch_jvm_pressure_threshold" {
   default     = 80
 }
 
+variable "opensearch_jvm_pressure_statistic" {
+  description = "Statistic for the OpenSearch JVMMemoryPressure alarm. Average smooths the per-GC sawtooth and avoids flapping around the threshold; Maximum is more sensitive."
+  type        = string
+  default     = "Maximum"
+
+  validation {
+    condition     = contains(["Maximum", "Average", "Minimum", "Sum"], var.opensearch_jvm_pressure_statistic)
+    error_message = "opensearch_jvm_pressure_statistic must be one of: Maximum, Average, Minimum, Sum."
+  }
+}
+
+variable "opensearch_jvm_pressure_period" {
+  description = "Metric period (seconds) for the JVMMemoryPressure alarm. Null falls back to monitoring_alarm_period."
+  type        = number
+  default     = null
+}
+
+variable "opensearch_jvm_pressure_evaluation_periods" {
+  description = "Evaluation periods for the JVMMemoryPressure alarm. Null falls back to monitoring_alarm_evaluation_periods."
+  type        = number
+  default     = null
+}
+
+variable "opensearch_jvm_pressure_datapoints_to_alarm" {
+  description = "Datapoints-to-alarm for the JVMMemoryPressure alarm. Null falls back to monitoring_datapoints_to_alarm."
+  type        = number
+  default     = null
+}
+
 variable "opensearch_old_gen_jvm_pressure_threshold" {
   description = "Alarm when OpenSearch OldGenJVMMemoryPressure (%) exceeds this"
   type        = number
