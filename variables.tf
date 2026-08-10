@@ -107,6 +107,12 @@ variable "eks_access_principal_arn" {
   default     = {}
 }
 
+variable "eks_view_principal_arn" {
+  description = "Map of named IAM Role/User ARNs to grant read-only cluster access. Same shape as eks_access_principal_arn, but each entry gets AmazonEKSViewPolicy instead of AmazonEKSClusterAdminPolicy. Use for principals that should be able to inspect the cluster without mutating it."
+  type        = map(string)
+  default     = {}
+}
+
 variable "coredns_configuration_values" {
   description = "Optional JSON-encoded configuration_values for the EKS coredns add-on. Use to customise the Corefile (e.g. forward zones to on-prem DNS). When null, the add-on runs with its default configuration."
   type        = string
