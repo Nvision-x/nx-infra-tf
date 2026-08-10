@@ -107,6 +107,26 @@ resource "aws_eks_access_policy_association" "access_policy" {
   }
 }
 
+# Separate map so read-only principals do not inherit cluster-admin from the
+# association above.
+resource "aws_eks_access_entry" "view_access" {
+  for_each      = var.eks_view_principal_arn
+  cluster_name  = module.eks.cluster_name
+  principal_arn = each.value
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "view_access_policy" {
+  for_each      = var.eks_view_principal_arn
+  cluster_name  = module.eks.cluster_name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+  principal_arn = each.value
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 locals {
   pg_host     = var.enable_postgres ? module.postgresql[0].db_instance_address : null
   pg_username = var.enable_postgres ? var.username : null
