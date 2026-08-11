@@ -1112,3 +1112,9 @@ variable "appcues_api_hostname" {
   type        = string
   default     = "ac.us.nvisionx.ai"
 }
+
+variable "bastion_least_privilege" {
+  description = "When true, the bastion's EKS access entry gets AmazonEKSViewPolicy instead of AmazonEKSClusterAdminPolicy. Anyone with a shell on the bastion inherits the instance profile, so on accounts holding customer data the host must not be cluster-admin; write kubectl comes from the operator's own role. Defaults to false to preserve existing behaviour on internal environments."
+  type        = bool
+  default     = false
+}
