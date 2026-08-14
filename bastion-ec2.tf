@@ -92,10 +92,16 @@ resource "aws_eks_access_entry" "bastion_access" {
   }
 }
 
+# A shell on the bastion inherits this, so on accounts holding customer data it is view
+# only; write kubectl comes from the human's own role instead.
 resource "aws_eks_access_policy_association" "bastion_access" {
-  count         = var.enable_bastion ? 1 : 0
-  cluster_name  = module.eks.cluster_name
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  count        = var.enable_bastion ? 1 : 0
+  cluster_name = module.eks.cluster_name
+  policy_arn = var.bastion_least_privilege ? (
+    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+    ) : (
+    "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  )
   principal_arn = var.bastion_eks_admin_role_arn
 
   access_scope {
