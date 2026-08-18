@@ -138,6 +138,12 @@ locals {
   neptune_port = var.enable_neptune ? tostring(aws_neptune_cluster.this[0].port) : null
 
   s3_vectors_bucket = var.enable_s3_vectors ? aws_s3vectors_vector_bucket.this[0].vector_bucket_name : null
+
+  # Which backend knowledge-hub should use. Derived from what is actually
+  # provisioned so the chart reads it from infra-config instead of each env
+  # repeating the choice in its values.
+  graph_store_backend  = var.enable_neptune ? "neptune" : null
+  vector_store_backend = var.enable_s3_vectors ? "s3vectors" : null
 }
 
 
@@ -166,13 +172,15 @@ resource "kubernetes_config_map_v1" "infra_config" {
 
     // Add PG, OS, Neptune, S3 Vectors only when enabled
     { for k, v in {
-      POSTGRES_HOST       = local.pg_host
-      POSTGRES_USERNAME   = local.pg_username
-      OPENSEARCH_HOST     = local.os_host
-      OPENSEARCH_USERNAME = local.os_username
-      NEPTUNE_HOST        = local.neptune_host
-      NEPTUNE_PORT        = local.neptune_port
-      S3_VECTORS_BUCKET   = local.s3_vectors_bucket
+      POSTGRES_HOST        = local.pg_host
+      POSTGRES_USERNAME    = local.pg_username
+      OPENSEARCH_HOST      = local.os_host
+      OPENSEARCH_USERNAME  = local.os_username
+      NEPTUNE_HOST         = local.neptune_host
+      NEPTUNE_PORT         = local.neptune_port
+      GRAPH_STORE_BACKEND  = local.graph_store_backend
+      S3_VECTORS_BUCKET    = local.s3_vectors_bucket
+      VECTOR_STORE_BACKEND = local.vector_store_backend
     } : k => v if v != null },
 
     var.ingress_internet_facing != null ? { ingress-internet-facing = var.ingress_internet_facing } : {},
