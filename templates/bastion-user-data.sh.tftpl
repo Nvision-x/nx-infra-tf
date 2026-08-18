@@ -1,0 +1,29 @@
+#!/bin/bash
+# Managed by nx-infra-tf. Holds the SSM parameter name, never the auth key
+# itself - user-data is readable by anyone with ec2:DescribeInstanceAttribute.
+set -euo pipefail
+
+dnf install -y dnf-plugins-core
+dnf config-manager --add-repo https://pkgs.tailscale.com/stable/amazon-linux/2023/tailscale.repo
+dnf install -y tailscale
+systemctl enable --now tailscaled
+
+cat > /etc/nx-tailscale.env <<'NXENV'
+TS_AUTHKEY_PARAM=${authkey_param}
+TS_TAGS=${tags}
+TS_ROUTES=${routes}
+TS_HOSTNAME=${hostname}
+NXENV
+chmod 0600 /etc/nx-tailscale.env
+
+cat > /usr/local/bin/tailscale-bootstrap.sh <<'NXSCRIPT'
+${script}
+NXSCRIPT
+chmod 0755 /usr/local/bin/tailscale-bootstrap.sh
+
+cat > /etc/systemd/system/tailscale-bootstrap.service <<'NXUNIT'
+${unit}
+NXUNIT
+
+systemctl daemon-reload
+systemctl enable --now tailscale-bootstrap.service

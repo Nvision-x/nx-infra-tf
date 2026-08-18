@@ -239,6 +239,47 @@ A few things this module does not (and cannot) do for you:
 
 ---
 
+## Bastion tailscale bootstrap
+
+Off by default. Turn it on per env:
+
+```hcl
+enable_tailscale_bootstrap = true
+tailscale_hostname         = "nx-development-exitnode"
+# tailscale_advertise_routes defaults to vpc_cidr_block
+```
+
+Terraform creates `/nx/tailscale/bastion-authkey` as a SecureString holding
+`PLACEHOLDER` and never touches the value again. Generate a **tagged, reusable**
+auth key in the tailscale admin console and paste it in:
+
+```bash
+aws ssm put-parameter --name /nx/tailscale/bastion-authkey \
+  --type SecureString --value tskey-auth-... --overwrite
+```
+
+From then on a rebuilt bastion registers itself on first boot. The key is read at
+boot only — user-data carries the parameter name, never the key.
+
+Existing hosts (and customer on-prem nodes with no AWS) run the same script by hand:
+
+```bash
+# AWS host: key comes from SSM
+sudo TS_HOSTNAME=nx-development-exitnode TS_ROUTES=10.5.0.0/16 \
+  /usr/local/bin/tailscale-bootstrap.sh
+
+# on-prem: pass the key directly
+sudo TS_AUTHKEY=tskey-auth-... TS_HOSTNAME=nx-ionis-exitnode \
+  /usr/local/bin/tailscale-bootstrap.sh
+```
+
+Tagged nodes are owned by the tailnet, not by whoever authenticated them, and their
+keys do not expire — which is what took `nx-development-exitnode` offline on
+2026-08-10. The `tag:exit-node` tag and its `tagOwner` must exist in the tailnet ACL
+before the auth key will work.
+
+---
+
 ## Requirements
 
 | Name | Version |

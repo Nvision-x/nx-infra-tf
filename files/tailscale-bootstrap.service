@@ -1,0 +1,13 @@
+[Unit]
+Description=Register this host on the tailnet
+After=network-online.target tailscaled.service
+Wants=network-online.target
+Requires=tailscaled.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/tailscale-bootstrap.sh
+
+[Install]
+WantedBy=multi-user.target
