@@ -261,6 +261,14 @@ aws ssm put-parameter --name /nx/tailscale/bastion-authkey \
 From then on a rebuilt bastion registers itself on first boot. The key is read at
 boot only — user-data carries the parameter name, never the key.
 
+Moving an existing user-owned node onto the tag needs `TS_FORCE=true`, which re-auths
+a node that is already up:
+
+```bash
+sudo TS_FORCE=true TS_HOSTNAME=nx-development-exitnode TS_ROUTES=10.5.0.0/16 \
+  /usr/local/bin/tailscale-bootstrap.sh
+```
+
 Existing hosts (and customer on-prem nodes with no AWS) run the same script by hand:
 
 ```bash

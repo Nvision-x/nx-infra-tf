@@ -17,10 +17,14 @@ TS_TAGS="${TS_TAGS:-tag:exit-node}"
 TS_ROUTES="${TS_ROUTES:-}"
 TS_HOSTNAME="${TS_HOSTNAME:-}"
 TS_ACCEPT_ROUTES="${TS_ACCEPT_ROUTES:-true}"
+# TS_FORCE=true re-auths a node that is already up, which is how a user-owned
+# node gets moved onto a tag
+TS_FORCE="${TS_FORCE:-false}"
 
 log() { echo "[tailscale-bootstrap] $*"; }
 
-if tailscale status --json 2>/dev/null | grep -q '"BackendState"[[:space:]]*:[[:space:]]*"Running"'; then
+if [[ "$TS_FORCE" != "true" ]] &&
+  tailscale status --json 2>/dev/null | grep -q '"BackendState"[[:space:]]*:[[:space:]]*"Running"'; then
   log "already registered, nothing to do"
   exit 0
 fi
@@ -52,6 +56,9 @@ if [[ -n "$TS_HOSTNAME" ]]; then
 fi
 if [[ "$TS_ACCEPT_ROUTES" == "true" ]]; then
   args+=(--accept-routes)
+fi
+if [[ "$TS_FORCE" == "true" ]]; then
+  args+=(--force-reauth)
 fi
 
 log "registering ${TS_HOSTNAME:-$(hostname)} tags=$TS_TAGS routes=${TS_ROUTES:-none}"
