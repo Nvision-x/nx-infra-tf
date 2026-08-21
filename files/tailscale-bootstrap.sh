@@ -47,7 +47,10 @@ if [[ -z "$TS_AUTHKEY" || "$TS_AUTHKEY" == "PLACEHOLDER" ]]; then
   exit 1
 fi
 
-args=(--authkey="$TS_AUTHKEY" --advertise-tags="$TS_TAGS" --advertise-exit-node)
+# --accept-dns=false always: if tailscale manages resolv.conf on the box that IS
+# the VPN, a bad tailnet DNS config takes out the box's own resolution (and the
+# SSM agent with it)
+args=(--authkey="$TS_AUTHKEY" --advertise-tags="$TS_TAGS" --advertise-exit-node --accept-dns=false)
 if [[ -n "$TS_ROUTES" ]]; then
   args+=(--advertise-routes="$TS_ROUTES")
 fi
