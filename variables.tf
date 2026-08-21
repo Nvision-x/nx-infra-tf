@@ -295,6 +295,36 @@ variable "bastion_existing_pem" {
   default     = ""
 }
 
+variable "enable_tailscale_bootstrap" {
+  description = "Register the bastion on the tailnet at first boot with a tagged auth key from SSM"
+  type        = bool
+  default     = false
+}
+
+variable "tailscale_authkey_ssm_parameter_name" {
+  description = "SSM parameter holding the tailscale auth key the bastion registers with"
+  type        = string
+  default     = "/nx/tailscale/bastion-authkey"
+}
+
+variable "tailscale_tags" {
+  description = "Tailscale ACL tags the bastion registers with"
+  type        = string
+  default     = "tag:exit-node"
+}
+
+variable "tailscale_hostname" {
+  description = "Tailnet hostname for the bastion, defaults to the OS hostname when empty"
+  type        = string
+  default     = ""
+}
+
+variable "tailscale_advertise_routes" {
+  description = "Routes the bastion advertises, defaults to vpc_cidr_block when empty"
+  type        = string
+  default     = ""
+}
+
 # ----------------------------- NFS --------------------------------------
 
 variable "enable_nfs" {

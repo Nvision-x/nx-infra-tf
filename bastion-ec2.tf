@@ -56,6 +56,32 @@ resource "aws_secretsmanager_secret_version" "bastion_private_key_value" {
 }
 
 
+# Tailscale auth key, filled in out of band with a tagged key from the admin console
+resource "aws_ssm_parameter" "tailscale_authkey" {
+  count = var.enable_bastion && var.enable_tailscale_bootstrap ? 1 : 0
+
+  name        = var.tailscale_authkey_ssm_parameter_name
+  description = "Tagged tailscale auth key the bastion registers with on first boot"
+  type        = "SecureString"
+  value       = "PLACEHOLDER"
+  tags        = var.tags
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+locals {
+  bastion_user_data = var.enable_tailscale_bootstrap ? templatefile("${path.module}/templates/bastion-user-data.sh.tftpl", {
+    authkey_param = var.tailscale_authkey_ssm_parameter_name
+    tags          = var.tailscale_tags
+    routes        = var.tailscale_advertise_routes != "" ? var.tailscale_advertise_routes : var.vpc_cidr_block
+    hostname      = var.tailscale_hostname
+    script        = file("${path.module}/files/tailscale-bootstrap.sh")
+    unit          = file("${path.module}/files/tailscale-bootstrap.service")
+  }) : null
+}
+
 # EC2 Instance for Bastion
 resource "aws_instance" "bastion_ec2" {
   count                       = var.enable_bastion ? 1 : 0
@@ -66,6 +92,12 @@ resource "aws_instance" "bastion_ec2" {
   key_name                    = var.bastion_key_name
   associate_public_ip_address = true
   iam_instance_profile        = var.bastion_profile_name
+  user_data                   = local.bastion_user_data
+
+  # user-data only runs on first boot, so never bounce a live bastion over it
+  lifecycle {
+    ignore_changes = [user_data]
+  }
 
   root_block_device {
     volume_size           = var.bastion_disk_size
