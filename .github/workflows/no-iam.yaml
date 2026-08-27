@@ -1,0 +1,45 @@
+name: No IAM
+
+# nx-infra-tf owns no IAM identities — roles, policies and attachments belong in
+# nx-iam-tf. The rule kept eroding one justified exception at a time, so it is
+# checked here instead of relying on a reviewer noticing inside a large diff.
+#
+# Identity resources only. Resource policies (aws_sns_topic_policy,
+# aws_s3_bucket_policy, ...) belong with the resource they protect and are built
+# from aws_iam_policy_document data sources, which this deliberately ignores.
+
+on:
+  pull_request:
+    paths:
+      - '**.tf'
+      - '.github/workflows/no-iam.yaml'
+  workflow_dispatch:
+
+jobs:
+  no-iam:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Reject aws_iam_* resources
+        run: |
+          # Matches the declaration line, which terraform fmt keeps on one line.
+          if hits=$(grep -rnE '^[[:space:]]*resource[[:space:]]+"aws_iam_' --include='*.tf' --exclude-dir=.terraform . ); then
+            echo "::error::IAM identity resources are not allowed in nx-infra-tf — move them to nx-iam-tf."
+            echo "$hits" | while IFS= read -r line; do
+              file="${line%%:*}"; rest="${line#*:}"; lineno="${rest%%:*}"
+              echo "::error file=${file#./},line=${lineno}::IAM resource declared here; nx-infra-tf owns no IAM."
+            done
+            echo
+            echo "Found:"
+            echo "$hits"
+            echo
+            echo "Why: nx-infra-tf consumes role ARNs from nx-iam-tf. Creating IAM here"
+            echo "splits ownership across two states and invites a module cycle."
+            echo
+            echo "If the ARN you need only exists after the resource is created, build it"
+            echo "from plan-time-known values in nx-iam-tf instead of importing an output —"
+            echo "see knowledge-hub-data-access.tf there for the pattern."
+            exit 1
+          fi
+          echo "OK — no aws_iam_* resources."

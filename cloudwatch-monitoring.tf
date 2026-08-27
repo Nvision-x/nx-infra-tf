@@ -169,44 +169,28 @@ resource "aws_sns_topic_subscription" "monitoring_email" {
 # Amazon Q / AWS Chatbot console. Skipped until both Slack IDs are supplied.
 ################################################################################
 
-data "aws_iam_policy_document" "monitoring_chatbot_assume" {
-  count = local.monitoring_slack_enabled ? 1 : 0
-
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["chatbot.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "monitoring_chatbot" {
-  count              = local.monitoring_slack_enabled ? 1 : 0
-  name               = "${local.monitoring_name}-chatbot-alarms"
-  assume_role_policy = data.aws_iam_policy_document.monitoring_chatbot_assume[0].json
-  tags               = var.tags
-}
-
-# Notifications-only: read-only visibility, no mutating actions from chat.
-resource "aws_iam_role_policy_attachment" "monitoring_chatbot_readonly" {
-  count      = local.monitoring_slack_enabled ? 1 : 0
-  role       = aws_iam_role.monitoring_chatbot[0].name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
-}
+# The chatbot service role lives in nx-iam-tf
+# (aws_iam_role.monitoring_chatbot). This module owns no IAM; it takes the
+# ARN as an input, the same as every other role it consumes from there.
 
 resource "aws_chatbot_slack_channel_configuration" "monitoring" {
   count = local.monitoring_slack_enabled ? 1 : 0
 
   configuration_name    = "${local.monitoring_name}-alarms"
-  iam_role_arn          = aws_iam_role.monitoring_chatbot[0].arn
+  iam_role_arn          = var.monitoring_chatbot_role_arn
   slack_team_id         = var.monitoring_slack_workspace_id
   slack_channel_id      = var.monitoring_slack_channel_id
   sns_topic_arns        = [local.monitoring_sns_arn]
   guardrail_policy_arns = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
   logging_level         = "ERROR"
   tags                  = var.tags
+
+  lifecycle {
+    precondition {
+      condition     = var.monitoring_chatbot_role_arn != ""
+      error_message = "monitoring_chatbot_role_arn is required when the Slack workspace and channel are set. Enable enable_monitoring_chatbot_role in nx-iam-tf and pass its monitoring_chatbot_role_arn output."
+    }
+  }
 }
 
 ################################################################################

@@ -69,41 +69,7 @@ resource "aws_neptune_cluster_instance" "this" {
   tags               = var.tags
 }
 
-# Neptune IAM-auth policy attached to the knowledge-hub role.
-# Lives here (not in nx-iam-tf) because the policy resource ARN depends on
-# aws_neptune_cluster.this[0].cluster_resource_id, which only exists after
-# Neptune is provisioned. Pulling this into nx-iam-tf would create a cycle.
-
-resource "aws_iam_policy" "neptune_connect" {
-  count = var.enable_neptune && var.enable_knowledge_hub_pod_identity ? 1 : 0
-  name  = "${var.neptune_cluster_identifier}-connect"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "NeptuneDataAccess"
-        Effect = "Allow"
-        Action = [
-          "neptune-db:connect",
-          "neptune-db:ReadDataViaQuery",
-          "neptune-db:WriteDataViaQuery",
-          "neptune-db:DeleteDataViaQuery",
-          "neptune-db:GetEngineStatus",
-          "neptune-db:GetQueryStatus"
-        ]
-        Resource = "arn:aws:neptune-db:${var.region}:${data.aws_caller_identity.current.account_id}:${aws_neptune_cluster.this[0].cluster_resource_id}/*"
-      }
-    ]
-  })
-
-  tags = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "knowledge_hub_neptune" {
-  # count uses only plan-time-known vars; consumer must pass a real role ARN
-  # when enable_knowledge_hub_pod_identity is true, else the split fails at apply.
-  count      = var.enable_neptune && var.enable_knowledge_hub_pod_identity ? 1 : 0
-  role       = split("/", var.knowledge_hub_role_arn)[1]
-  policy_arn = aws_iam_policy.neptune_connect[0].arn
-}
+# Neptune IAM-auth for knowledge-hub lives in nx-iam-tf
+# (aws_iam_policy.knowledge_hub_neptune). This module owns no IAM; pass
+# neptune_cluster_resource_id from the output below into nx-iam-tf if you
+# want the policy scoped to this cluster rather than the account.
