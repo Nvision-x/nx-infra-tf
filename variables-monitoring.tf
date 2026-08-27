@@ -352,3 +352,9 @@ variable "efs_percent_io_limit_threshold" {
   type        = number
   default     = 90
 }
+
+variable "monitoring_chatbot_role_arn" {
+  description = "ARN of the AWS Chatbot service role, from nx-iam-tf's monitoring_chatbot_role_arn output. Required when monitoring_slack_workspace_id and monitoring_slack_channel_id are set."
+  type        = string
+  default     = ""
+}

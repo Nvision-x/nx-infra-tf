@@ -304,3 +304,19 @@ before the auth key will work.
 | EKS | terraform-aws-modules/eks/aws | ~> 21.0 |
 | RDS | terraform-aws-modules/rds/aws | ~> 6.0 |
 | OpenSearch | terraform-aws-modules/opensearch/aws | ~> 2.0 |
+
+---
+
+## No IAM in this module
+
+This module creates no IAM identities. Roles, policies and attachments live in
+[nx-iam-tf](https://github.com/Nvision-x/nx-iam-tf); this module consumes their
+ARNs as inputs. A CI check (`.github/workflows/no-iam.yaml`) fails any PR that
+adds an `aws_iam_*` resource.
+
+Resource policies are not affected — `aws_sns_topic_policy`,
+`aws_s3_bucket_policy` and friends belong with the resource they protect.
+
+The awkward case is an ARN that only exists once the resource does. Build it in
+nx-iam-tf from plan-time-known values rather than feeding an output backwards
+into that module; see `knowledge-hub-data-access.tf` there.
