@@ -707,6 +707,12 @@ variable "enable_security_hub_controls" {
   default     = true
 }
 
+variable "enable_cloudtrail_s3_data_events" {
+  description = "Create the nvisionx-s3-data-events trail. Defaults to false: S3 data events bill per object operation, so in a shared or customer-owned account this trail can cost thousands per month for controls that may not be required. Requires enable_security_hub_controls for its bucket and KMS key."
+  type        = bool
+  default     = false
+}
+
 variable "cloudtrail_log_all_s3_buckets" {
   description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account (required for S3.22/S3.23 compliance). When false, only logs NvisionX managed buckets. Set to false for customer deployments where customers have their own buckets."
   type        = bool

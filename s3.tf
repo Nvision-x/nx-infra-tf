@@ -328,7 +328,9 @@ resource "aws_s3_bucket_logging" "cloudtrail_logs" {
 
 # S3.22, S3.23, CloudTrail.4 - CloudTrail for S3 data events
 resource "aws_cloudtrail" "s3_data_events" {
-  count                         = var.enable_security_hub_controls ? 1 : 0
+  # AND, not OR: the KMS key and log bucket below are gated on
+  # enable_security_hub_controls, so this trail cannot outlive them.
+  count                         = var.enable_security_hub_controls && var.enable_cloudtrail_s3_data_events ? 1 : 0
   name                          = "nvisionx-s3-data-events"
   s3_bucket_name                = aws_s3_bucket.nvisionx_buckets["cloudtrail-logs"].id
   include_global_service_events = true
