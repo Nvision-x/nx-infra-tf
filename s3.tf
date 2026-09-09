@@ -345,8 +345,8 @@ resource "aws_cloudtrail" "s3_data_events" {
 
     data_resource {
       type = "AWS::S3::Object"
-      # When cloudtrail_log_all_s3_buckets=true: logs ALL buckets (required for S3.22/S3.23 compliance)
-      # When cloudtrail_log_all_s3_buckets=false: logs only NvisionX managed buckets (for customer deployments)
+      # true: every bucket in the account (S3.22/S3.23), and every other tenant's
+      # object traffic too. false (default): only the buckets this module manages.
       values = var.cloudtrail_log_all_s3_buckets ? ["arn:aws:s3:::"] : [for k, v in aws_s3_bucket.nvisionx_buckets : "${v.arn}/*" if k != "cloudtrail-logs"]
     }
   }
