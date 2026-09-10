@@ -43,13 +43,6 @@ resource "aws_security_group_rule" "bastion_heartbeat_ssh" {
   source_security_group_id = aws_security_group.bastion_heartbeat[0].id
 }
 
-data "archive_file" "bastion_heartbeat" {
-  count       = local.heartbeat_enabled ? 1 : 0
-  type        = "zip"
-  source_file = "${path.module}/files/bastion_heartbeat.py"
-  output_path = "${path.module}/files/bastion_heartbeat.zip"
-}
-
 resource "aws_cloudwatch_log_group" "bastion_heartbeat" {
   count             = local.heartbeat_enabled ? 1 : 0
   name              = "/aws/lambda/${local.heartbeat_function_name}"
@@ -58,13 +51,16 @@ resource "aws_cloudwatch_log_group" "bastion_heartbeat" {
 }
 
 resource "aws_lambda_function" "bastion_heartbeat" {
-  count            = local.heartbeat_enabled ? 1 : 0
-  function_name    = local.heartbeat_function_name
-  role             = var.bastion_heartbeat_role_arn
-  runtime          = "python3.12"
-  handler          = "bastion_heartbeat.handler"
-  filename         = data.archive_file.bastion_heartbeat[0].output_path
-  source_code_hash = data.archive_file.bastion_heartbeat[0].output_base64sha256
+  count         = local.heartbeat_enabled ? 1 : 0
+  function_name = local.heartbeat_function_name
+  role          = var.bastion_heartbeat_role_arn
+  runtime       = "python3.12"
+  handler       = "bastion_heartbeat.handler"
+  # zip is committed (CI applies a saved plan in a separate job, so a
+  # plan-time archive_file is absent at apply); rebuild after editing the py:
+  #   cd files && zip -X bastion_heartbeat.zip bastion_heartbeat.py
+  filename         = "${path.module}/files/bastion_heartbeat.zip"
+  source_code_hash = filebase64sha256("${path.module}/files/bastion_heartbeat.zip")
   timeout          = 60 # tailscaled RunCommand check polls for up to ~20s
   memory_size      = 128
 
