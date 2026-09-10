@@ -18,6 +18,19 @@ resource "aws_security_group" "bastion_ec2_sg" {
       cidr_blocks = ingress.value.cidr_blocks
     }
   }
+
+  # inline (not aws_security_group_rule): this SG manages rules inline, so a
+  # standalone rule would be removed on the next SG apply
+  dynamic "ingress" {
+    for_each = local.heartbeat_ssh_enabled ? [1] : []
+    content {
+      description     = "SSH reachability probe from the heartbeat Lambda"
+      from_port       = 22
+      to_port         = 22
+      protocol        = "tcp"
+      security_groups = [aws_security_group.bastion_heartbeat[0].id]
+    }
+  }
   egress {
     from_port   = 0
     to_port     = 0

@@ -32,16 +32,7 @@ resource "aws_security_group" "bastion_heartbeat" {
   tags = var.tags
 }
 
-resource "aws_security_group_rule" "bastion_heartbeat_ssh" {
-  count                    = local.heartbeat_ssh_enabled ? 1 : 0
-  type                     = "ingress"
-  description              = "SSH reachability probe from the heartbeat Lambda"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.bastion_ec2_sg[0].id
-  source_security_group_id = aws_security_group.bastion_heartbeat[0].id
-}
+# bastion SG ingress for the SSH dial lives inline in bastion-ec2.tf
 
 resource "aws_cloudwatch_log_group" "bastion_heartbeat" {
   count             = local.heartbeat_enabled ? 1 : 0
