@@ -1154,3 +1154,9 @@ variable "bastion_least_privilege" {
   type        = bool
   default     = false
 }
+
+variable "enable_container_insights_logs" {
+  description = "Ship container logs to CloudWatch via the amazon-cloudwatch-observability fluent-bit shipper. Container Insights METRICS are unaffected and keep feeding the EKS node alarms. Defaults to true to preserve existing behaviour; set false on environments where the log volume is not worth the CloudWatch DataProcessing-Bytes charge."
+  type        = bool
+  default     = true
+}
