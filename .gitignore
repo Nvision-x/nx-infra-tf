@@ -35,3 +35,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# archive_file output for the heartbeat lambda
+files/bastion_heartbeat.zip

@@ -358,3 +358,91 @@ variable "monitoring_chatbot_role_arn" {
   type        = string
   default     = ""
 }
+
+# --------------------------------------------------------------------------- #
+# Bastion heartbeat (Lambda probe: SSM agent freshness + Tailscale device)
+# --------------------------------------------------------------------------- #
+
+variable "monitoring_bastion_heartbeat_enabled" {
+  description = "Enable the bastion heartbeat Lambda probe and its alarms (only applied when the bastion is created and monitoring_ec2_enabled)"
+  type        = bool
+  default     = true
+}
+
+variable "bastion_heartbeat_role_arn" {
+  description = "Execution role ARN for the heartbeat Lambda, created in nx-iam-tf (bastion_heartbeat_role_arn output). Required when the heartbeat is enabled."
+  type        = string
+  default     = ""
+}
+
+variable "bastion_heartbeat_metric_namespace" {
+  description = "CloudWatch namespace the heartbeat metrics are published to. Must match the namespace the nx-iam-tf role's PutMetricData permission is conditioned on."
+  type        = string
+  default     = "NX/Bastion"
+}
+
+variable "bastion_heartbeat_tailscale_secret_arn" {
+  description = "Secrets Manager secret with Tailscale API credentials, JSON: {\"oauth_client_id\",\"oauth_client_secret\"} (devices:read scope) or {\"api_key\"}. Empty disables the Tailscale device check; the SSM check still runs."
+  type        = string
+  default     = ""
+}
+
+variable "bastion_heartbeat_tailscale_tailnet" {
+  description = "Tailnet name for the Tailscale API. \"-\" means the credential's default tailnet."
+  type        = string
+  default     = "-"
+}
+
+variable "bastion_heartbeat_schedule_expression" {
+  description = "EventBridge schedule for the heartbeat probe"
+  type        = string
+  default     = "rate(1 minute)"
+}
+
+variable "bastion_heartbeat_max_ssm_ping_age_seconds" {
+  description = "SSM agent is considered unhealthy when its last ping is older than this (agent pings roughly every 5 minutes)"
+  type        = number
+  default     = 600
+}
+
+variable "bastion_heartbeat_max_tailscale_seen_age_seconds" {
+  description = "Tailscale device is considered offline when lastSeen is older than this"
+  type        = number
+  default     = 600
+}
+
+variable "bastion_heartbeat_alarm_period" {
+  description = "Metric period in seconds for the heartbeat alarms (keep aligned with the probe schedule)"
+  type        = number
+  default     = 60
+}
+
+variable "bastion_heartbeat_alarm_evaluation_periods" {
+  description = "Evaluation periods for the heartbeat alarms"
+  type        = number
+  default     = 5
+}
+
+variable "bastion_heartbeat_datapoints_to_alarm" {
+  description = "Breaching datapoints within the evaluation window that trigger the heartbeat alarms"
+  type        = number
+  default     = 3
+}
+
+variable "bastion_heartbeat_log_retention_days" {
+  description = "CloudWatch Logs retention for the heartbeat Lambda"
+  type        = number
+  default     = 30
+}
+
+variable "bastion_heartbeat_ssh_check_enabled" {
+  description = "TCP-dial the bastion's SSH port from inside the VPC. Attaches the heartbeat Lambda to the private subnets and adds an SG-to-SG rule on the bastion SG."
+  type        = bool
+  default     = true
+}
+
+variable "bastion_heartbeat_tailscaled_check_enabled" {
+  description = "Check `systemctl is-active tailscaled` on the bastion via SSM RunCommand each tick. Requires the nx-iam-tf role to allow ssm:SendCommand."
+  type        = bool
+  default     = true
+}
