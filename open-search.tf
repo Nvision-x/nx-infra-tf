@@ -28,8 +28,10 @@ resource "aws_security_group" "opensearch_sg" {
 data "aws_caller_identity" "current" {}
 
 
-# Local to determine if override_main_response_version is supported
-# This option is only supported in OpenSearch 1.x and Elasticsearch
+# Local to determine if override_main_response_version is supported.
+# AWS rejects this option outright on Elasticsearch domains -- it is OpenSearch 1.x
+# only. The engine check matters because the major-version fallback below yields 0
+# for Elasticsearch, which would otherwise satisfy <= 1.
 locals {
   opensearch_major_version = (
     startswith(var.engine_version, "OpenSearch_") ?
@@ -37,8 +39,10 @@ locals {
     0 # Elasticsearch versions
   )
 
-  # Only include override_main_response_version for OpenSearch 1.x and Elasticsearch
-  supports_override_response_version = local.opensearch_major_version <= 1
+  # OpenSearch 1.x only. Elasticsearch falls through the startswith() guard.
+  supports_override_response_version = (
+    startswith(var.engine_version, "OpenSearch_") && local.opensearch_major_version <= 1
+  )
 
   advanced_options_base = {
     "indices.fielddata.cache.size"           = "20"
