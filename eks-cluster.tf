@@ -12,13 +12,27 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnets
 
-  endpoint_private_access                  = var.cluster_endpoint_private_access
-  endpoint_public_access                   = var.cluster_endpoint_public_access
-  endpoint_public_access_cidrs             = var.cluster_endpoint_public_access_cidrs
-  enable_irsa                              = false # Using Pod Identity instead
-  create_iam_role                          = var.create_iam_role
-  iam_role_arn                             = var.cluster_iam_role_arn
-  eks_managed_node_groups                  = var.eks_managed_node_groups
+  endpoint_private_access      = var.cluster_endpoint_private_access
+  endpoint_public_access       = var.cluster_endpoint_public_access
+  endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
+  enable_irsa                  = false # Using Pod Identity instead
+  create_iam_role              = var.create_iam_role
+  iam_role_arn                 = var.cluster_iam_role_arn
+  # Node AMI upgrades are opt-in, not automatic. Upstream defaults
+  # use_latest_ami_release_version to true, which re-resolves the AMI from SSM
+  # on every plan, so any apply rolls every node group as soon as AWS publishes
+  # a new release. With it false and ami_release_version null the module sends
+  # release_version = null and AWS keeps the running AMI
+  # (eks-managed-node-group/main.tf:480), so nodes only move when asked.
+  # Merged per-group because terraform-aws-eks v21 dropped
+  # eks_managed_node_group_defaults. Per-group values still win.
+  eks_managed_node_groups = {
+    for k, v in var.eks_managed_node_groups : k => merge({
+      use_latest_ami_release_version = var.use_latest_ami_release_version
+      ami_release_version            = var.ami_release_version
+    }, v)
+  }
+
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 
   addons = merge(
@@ -49,8 +63,12 @@ module "eks" {
     } : {},
     {
       # Disable Application Signals auto-monitoring to prevent OTEL injection
-      # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
-      # CloudWatch Container Insights and logs still work
+      # (stops auto-instrumentation of Java, Python, Node, .NET).
+      #
+      # containerLogs is separately toggleable because it is the expensive half:
+      # the fluent-bit log shipper drives CloudWatch DataProcessing-Bytes, while
+      # containerInsights metrics are what the EKS node alarms read. Turning
+      # logs off keeps the alarms working. See var.enable_container_insights_logs.
       amazon-cloudwatch-observability = {
         configuration_values = jsonencode({
           manager = {
@@ -59,6 +77,9 @@ module "eks" {
                 monitorAllServices = false
               }
             }
+          }
+          containerLogs = {
+            enabled = var.enable_container_insights_logs
           }
         })
       }
