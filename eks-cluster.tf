@@ -49,8 +49,12 @@ module "eks" {
     } : {},
     {
       # Disable Application Signals auto-monitoring to prevent OTEL injection
-      # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
-      # CloudWatch Container Insights and logs still work
+      # (stops auto-instrumentation of Java, Python, Node, .NET).
+      #
+      # containerLogs is separately toggleable because it is the expensive half:
+      # the fluent-bit log shipper drives CloudWatch DataProcessing-Bytes, while
+      # containerInsights metrics are what the EKS node alarms read. Turning
+      # logs off keeps the alarms working. See var.enable_container_insights_logs.
       amazon-cloudwatch-observability = {
         configuration_values = jsonencode({
           manager = {
@@ -59,6 +63,9 @@ module "eks" {
                 monitorAllServices = false
               }
             }
+          }
+          containerLogs = {
+            enabled = var.enable_container_insights_logs
           }
         })
       }
