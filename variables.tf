@@ -762,9 +762,9 @@ variable "enable_cloudtrail_s3_data_events" {
 }
 
 variable "cloudtrail_log_all_s3_buckets" {
-  description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account (required for S3.22/S3.23 compliance). When false, only logs NvisionX managed buckets. Set to false for customer deployments where customers have their own buckets."
+  description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account, which S3.22/S3.23 require. Defaults to false so the account-wide scope is a deliberate choice: data events bill per object operation, and in a shared or customer-owned account the wildcard bills us for logging every other tenant's traffic. Set true only in accounts we own outright."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "snapshot_role_arn" {
