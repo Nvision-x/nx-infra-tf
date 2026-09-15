@@ -762,9 +762,9 @@ variable "enable_cloudtrail_s3_data_events" {
 }
 
 variable "cloudtrail_log_all_s3_buckets" {
-  description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account (required for S3.22/S3.23 compliance). When false, only logs NvisionX managed buckets. Set to false for customer deployments where customers have their own buckets."
+  description = "When true, CloudTrail logs object-level events for ALL S3 buckets in the account, which S3.22/S3.23 require. Defaults to false so the account-wide scope is a deliberate choice: data events bill per object operation, and in a shared or customer-owned account the wildcard bills us for logging every other tenant's traffic. Set true only in accounts we own outright."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "snapshot_role_arn" {
@@ -1153,4 +1153,22 @@ variable "bastion_least_privilege" {
   description = "When true, the bastion's EKS access entry gets AmazonEKSViewPolicy instead of AmazonEKSClusterAdminPolicy. Anyone with a shell on the bastion inherits the instance profile, so on accounts holding customer data the host must not be cluster-admin; write kubectl comes from the operator's own role. Defaults to false to preserve existing behaviour on internal environments."
   type        = bool
   default     = false
+}
+
+variable "enable_container_insights_logs" {
+  description = "Ship container logs to CloudWatch via the amazon-cloudwatch-observability fluent-bit shipper. Container Insights METRICS are unaffected and keep feeding the EKS node alarms, so turning this off does not blind the node alarms. Defaults to false: the shipper drives CloudWatch DataProcessing-Bytes and the volume is rarely worth it, so shipping logs should be a deliberate per-environment choice. Set true where the container logs are actually consumed."
+  type        = bool
+  default     = false
+}
+
+variable "use_latest_ami_release_version" {
+  description = "Re-resolve the node AMI from SSM on every plan. Upstream defaults this to true, which means any apply rolls every node group as soon as AWS publishes a new release - an unscheduled node cycle on whatever the apply happened to be for. Defaults to false so AMI upgrades are deliberate; set ami_release_version to move to a specific AMI, or set this true on environments where rolling with upstream is acceptable."
+  type        = bool
+  default     = false
+}
+
+variable "ami_release_version" {
+  description = "Pin node groups to a specific EKS AMI release version, e.g. \"1.35.7-20260903\" for Bottlerocket or the AL2023 equivalent. Only takes effect when use_latest_ami_release_version is false. Null leaves the running AMI untouched, so existing nodes are not rolled."
+  type        = string
+  default     = null
 }
