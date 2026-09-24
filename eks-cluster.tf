@@ -24,13 +24,14 @@ module "eks" {
   addons = merge(
     {
       coredns = merge(
-        { before_compute = true },
+        { before_compute = true, addon_version = lookup(var.addon_versions, "coredns", null) },
         var.coredns_configuration_values != null ? { configuration_values = var.coredns_configuration_values } : {}
       )
-      eks-pod-identity-agent = { before_compute = true }
-      kube-proxy             = { before_compute = true }
-      vpc-cni                = { before_compute = true }
+      eks-pod-identity-agent = { before_compute = true, addon_version = lookup(var.addon_versions, "eks-pod-identity-agent", null) }
+      kube-proxy             = { before_compute = true, addon_version = lookup(var.addon_versions, "kube-proxy", null) }
+      vpc-cni                = { before_compute = true, addon_version = lookup(var.addon_versions, "vpc-cni", null) }
       aws-ebs-csi-driver = {
+        addon_version = lookup(var.addon_versions, "aws-ebs-csi-driver", null)
         # Use Pod Identity instead of IRSA for EBS CSI
         # This replaces the old service_account_role_arn approach
         pod_identity_association = [{
@@ -41,6 +42,7 @@ module "eks" {
     },
     var.enable_efs ? {
       aws-efs-csi-driver = {
+        addon_version = lookup(var.addon_versions, "aws-efs-csi-driver", null)
         pod_identity_association = [{
           role_arn        = var.efs_csi_role_arn
           service_account = "efs-csi-controller-sa"
@@ -52,6 +54,7 @@ module "eks" {
       # This stops auto-instrumentation of all languages (Java, Python, Node, .NET)
       # CloudWatch Container Insights and logs still work
       amazon-cloudwatch-observability = {
+        addon_version = lookup(var.addon_versions, "amazon-cloudwatch-observability", null)
         configuration_values = jsonencode({
           manager = {
             applicationSignals = {
