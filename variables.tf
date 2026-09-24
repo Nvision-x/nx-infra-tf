@@ -119,6 +119,12 @@ variable "coredns_configuration_values" {
   default     = null
 }
 
+variable "addon_versions" {
+  description = "Pin EKS managed add-on versions, keyed by add-on name (e.g. { coredns = \"v1.14.3-eksbuild.16\" }). Unlisted add-ons follow upstream's most_recent default and move on any apply that re-reads the cluster. Pinning matters on a cluster with no nodes, where an update can never finish and times out the apply."
+  type        = map(string)
+  default     = {}
+}
+
 variable "namespace" {
   description = "Namespace where resources will be created"
   type        = string
