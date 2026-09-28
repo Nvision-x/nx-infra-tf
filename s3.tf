@@ -13,9 +13,9 @@ locals {
   #   - applogo, companylogo, downloads: user-uploaded assets
   #   - minio, csvfiles: tenant-owned content with no fixed lifetime
   #   - text-content-cache: indefinite retention requested by the Content Service team
+  #   - os-backup: snapshots are incremental and reuse old blobs; OpenSearch prunes it
   bucket_retention_days = {
     logs                = 30
-    "os-backup"         = 180
     "postgres-backup"   = 180
     "cloudtrail-logs"   = 180
     "raw-content-cache" = 1
@@ -68,18 +68,50 @@ resource "aws_s3_bucket_public_access_block" "nvisionx_buckets" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
-  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if contains(keys(local.bucket_retention_days), k) }
+  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if contains(keys(local.bucket_retention_days), k) || k == "os-backup" }
 
   bucket = each.value.id
 
-  rule {
-    id     = "expire-old-objects"
-    status = "Enabled"
+  dynamic "rule" {
+    for_each = contains(keys(local.bucket_retention_days), each.key) ? [1] : []
+    content {
+      id     = "expire-old-objects"
+      status = "Enabled"
 
-    filter {}
+      filter {}
 
-    expiration {
-      days = local.bucket_retention_days[each.key]
+      expiration {
+        days = local.bucket_retention_days[each.key]
+      }
+
+      # On a versioned bucket, expiration alone only adds a delete marker and keeps paying for the data.
+      dynamic "noncurrent_version_expiration" {
+        for_each = contains(local.unversioned_buckets, each.key) ? [] : [1]
+        content {
+          noncurrent_days = var.s3_noncurrent_version_expiration_days
+        }
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = each.key == "os-backup" ? [1] : []
+    content {
+      id     = "os-backup-housekeeping"
+      status = "Enabled"
+
+      filter {}
+
+      abort_incomplete_multipart_upload {
+        days_after_initiation = 7
+      }
+
+      dynamic "noncurrent_version_expiration" {
+        for_each = var.os_backup_noncurrent_version_expiration_days > 0 ? [1] : []
+        content {
+          noncurrent_days = var.os_backup_noncurrent_version_expiration_days
+        }
+      }
     }
   }
 }

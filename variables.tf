@@ -755,6 +755,18 @@ variable "s3_force_destroy" {
   default     = false
 }
 
+variable "s3_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent object versions in the versioned buckets that have an expiration (logs, postgres-backup, cloudtrail-logs)"
+  type        = number
+  default     = 7
+}
+
+variable "os_backup_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent versions in the os-backup bucket; 0 keeps them forever. Before enabling on an existing bucket, restore any snapshot blobs the old 180-day expiration delete-marked, or purging them breaks the snapshots that still reference them."
+  type        = number
+  default     = 0
+}
+
 variable "enable_security_hub_controls" {
   description = "Enable Security Hub compliance resources (CloudTrail S3 data events, KMS encryption, access logging)"
   type        = bool
