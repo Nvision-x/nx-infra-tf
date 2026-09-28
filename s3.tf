@@ -8,6 +8,9 @@ locals {
   # and would just accumulate noncurrent versions.
   unversioned_buckets = ["raw-content-cache", "text-content-cache"]
 
+  # User/tenant content: no object expiration, but old versions age out.
+  content_buckets = ["applogo", "companylogo", "downloads", "minio", "csvfiles"]
+
   # Per-bucket object expiration. Buckets omitted from this map have no
   # expiration applied:
   #   - applogo, companylogo, downloads: user-uploaded assets
@@ -68,9 +71,27 @@ resource "aws_s3_bucket_public_access_block" "nvisionx_buckets" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "nvisionx_buckets" {
-  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if contains(keys(local.bucket_retention_days), k) || k == "os-backup" }
+  for_each = { for k, v in aws_s3_bucket.nvisionx_buckets : k => v if contains(keys(local.bucket_retention_days), k) || contains(local.content_buckets, k) || k == "os-backup" }
 
   bucket = each.value.id
+
+  dynamic "rule" {
+    for_each = contains(local.content_buckets, each.key) ? [1] : []
+    content {
+      id     = "expire-noncurrent-versions"
+      status = "Enabled"
+
+      filter {}
+
+      noncurrent_version_expiration {
+        noncurrent_days = var.s3_content_noncurrent_version_expiration_days
+      }
+
+      abort_incomplete_multipart_upload {
+        days_after_initiation = 7
+      }
+    }
+  }
 
   dynamic "rule" {
     for_each = contains(keys(local.bucket_retention_days), each.key) ? [1] : []

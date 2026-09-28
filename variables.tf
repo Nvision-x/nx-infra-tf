@@ -761,6 +761,12 @@ variable "s3_noncurrent_version_expiration_days" {
   default     = 7
 }
 
+variable "s3_content_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent object versions in the user/tenant content buckets (applogo, companylogo, downloads, minio, csvfiles) — the recovery window for an accidental delete or overwrite"
+  type        = number
+  default     = 90
+}
+
 variable "os_backup_noncurrent_version_expiration_days" {
   description = "Days to keep noncurrent versions in the os-backup bucket; 0 keeps them forever. Before enabling on an existing bucket, restore any snapshot blobs the old 180-day expiration delete-marked, or purging them breaks the snapshots that still reference them."
   type        = number
