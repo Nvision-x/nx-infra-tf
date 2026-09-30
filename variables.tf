@@ -119,6 +119,12 @@ variable "coredns_configuration_values" {
   default     = null
 }
 
+variable "addon_versions" {
+  description = "Pin EKS managed add-on versions, keyed by add-on name (e.g. { coredns = \"v1.14.3-eksbuild.16\" }). Unlisted add-ons follow upstream's most_recent default and move on any apply that re-reads the cluster. Pinning matters on a cluster with no nodes, where an update can never finish and times out the apply."
+  type        = map(string)
+  default     = {}
+}
+
 variable "namespace" {
   description = "Namespace where resources will be created"
   type        = string
@@ -747,6 +753,24 @@ variable "s3_force_destroy" {
   description = "Whether to force destroy the S3 bucket and its contents on deletion"
   type        = bool
   default     = false
+}
+
+variable "s3_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent object versions in the versioned buckets that have an expiration (logs, postgres-backup, cloudtrail-logs)"
+  type        = number
+  default     = 7
+}
+
+variable "s3_content_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent object versions in the user/tenant content buckets (applogo, companylogo, downloads, minio, csvfiles) — the recovery window for an accidental delete or overwrite"
+  type        = number
+  default     = 90
+}
+
+variable "os_backup_noncurrent_version_expiration_days" {
+  description = "Days to keep noncurrent versions in the os-backup bucket; 0 keeps them forever. Before enabling on an existing bucket, restore any snapshot blobs the old 180-day expiration delete-marked, or purging them breaks the snapshots that still reference them."
+  type        = number
+  default     = 0
 }
 
 variable "enable_security_hub_controls" {
