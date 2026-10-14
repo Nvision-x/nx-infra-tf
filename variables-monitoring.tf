@@ -24,6 +24,12 @@ variable "enable_monitoring" {
   default     = false
 }
 
+variable "monitoring_alb_enabled" {
+  description = "Alarm on the ingress ALBs created by the AWS Load Balancer Controller (latency + unhealthy targets)"
+  type        = bool
+  default     = true
+}
+
 variable "monitoring_eks_enabled" {
   description = "Enable EKS / Container Insights alarms (requires the amazon-cloudwatch-observability addon, which this module installs)"
   type        = bool
@@ -164,6 +170,12 @@ variable "eks_node_cpu_threshold" {
   description = "Alarm when any node's CPU utilization (%) exceeds this"
   type        = number
   default     = 85
+}
+
+variable "alb_latency_threshold_seconds" {
+  description = "Alarm when an ingress ALB's p95 TargetResponseTime (seconds) exceeds this"
+  type        = number
+  default     = 2
 }
 
 variable "eks_node_memory_threshold" {
@@ -430,9 +442,9 @@ variable "bastion_heartbeat_datapoints_to_alarm" {
 }
 
 variable "bastion_heartbeat_log_retention_days" {
-  description = "CloudWatch Logs retention for the heartbeat Lambda"
+  description = "CloudWatch Logs retention for the heartbeat Lambda. SOC 2 evidence needs at least 365."
   type        = number
-  default     = 30
+  default     = 365
 }
 
 variable "bastion_heartbeat_ssh_check_enabled" {
