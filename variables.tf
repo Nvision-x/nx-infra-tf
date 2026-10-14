@@ -232,7 +232,7 @@ variable "enable_bastion" {
 }
 
 variable "enable_post_deployment" {
-  description = "Flag to enable post-deployment setup (snapshot repository registration, kubectl configuration, etc.)"
+  description = "Deprecated: the SSH-based post-deployment provisioners were removed (bastion has no inbound SSH). Kept so existing callers still plan."
   type        = bool
   default     = false
 }
@@ -247,6 +247,16 @@ variable "bastion_ingress_rules" {
     cidr_blocks = list(string)
   }))
   default = []
+
+  # bastion access is SSM Session Manager / Tailscale only
+  validation {
+    condition = alltrue([
+      for r in var.bastion_ingress_rules :
+      !contains(["-1", "all"], lower(r.protocol)) &&
+      !(contains(["tcp", "6"], lower(r.protocol)) && r.from_port <= 22 && r.to_port >= 22)
+    ])
+    error_message = "bastion_ingress_rules must not allow SSH (tcp/22) or all traffic; use SSM Session Manager or Tailscale to reach the bastion."
+  }
 }
 
 variable "bastion_public_subnet_id" {
@@ -744,7 +754,7 @@ variable "bastion_profile_name" {
 }
 
 variable "bastion_user_name" {
-  description = "SSH user name for the bastion host (e.g., ec2-user for Amazon Linux, ubuntu for Ubuntu)"
+  description = "Deprecated: only used by the removed SSH post-deployment provisioners. Kept so existing callers still plan."
   type        = string
   default     = "ec2-user"
 }
