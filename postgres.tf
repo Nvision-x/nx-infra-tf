@@ -101,8 +101,7 @@ module "postgresql" {
   parameter_group_use_name_prefix = true
   parameters                      = local.postgres_parameters
 
-  # Ship the postgresql log (which carries the pgaudit records) to CloudWatch,
-  # where retention is set to meet the 365-day log retention requirement.
+  # Ship the postgresql log (which carries the pgaudit records) to CloudWatch.
   enabled_cloudwatch_logs_exports        = var.postgres_cloudwatch_logs_exports
   create_cloudwatch_log_group            = length(var.postgres_cloudwatch_logs_exports) > 0
   cloudwatch_log_group_retention_in_days = var.postgres_log_retention_in_days

@@ -76,12 +76,6 @@ variable "cluster_enabled_log_types" {
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
-variable "cluster_log_retention_in_days" {
-  description = "Retention for the EKS control-plane CloudWatch log group. SOC 2 evidence needs at least 365."
-  type        = number
-  default     = 365
-}
-
 variable "cluster_endpoint_private_access" {
   description = "Enable private access to EKS cluster endpoint"
   type        = bool
@@ -551,9 +545,9 @@ variable "postgres_cloudwatch_logs_exports" {
 }
 
 variable "postgres_log_retention_in_days" {
-  description = "Retention for the RDS CloudWatch log group(s). SOC 2 evidence needs at least 365."
+  description = "Retention for the RDS CloudWatch log group(s)"
   type        = number
-  default     = 365
+  default     = 90
 }
 
 variable "skip_final_snapshot" {

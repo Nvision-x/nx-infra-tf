@@ -442,9 +442,9 @@ variable "bastion_heartbeat_datapoints_to_alarm" {
 }
 
 variable "bastion_heartbeat_log_retention_days" {
-  description = "CloudWatch Logs retention for the heartbeat Lambda. SOC 2 evidence needs at least 365."
+  description = "CloudWatch Logs retention for the heartbeat Lambda"
   type        = number
-  default     = 365
+  default     = 30
 }
 
 variable "bastion_heartbeat_ssh_check_enabled" {
