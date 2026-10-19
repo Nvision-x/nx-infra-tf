@@ -18,6 +18,12 @@ module "eks" {
   enable_irsa                  = false # Using Pod Identity instead
   create_iam_role              = var.create_iam_role
   iam_role_arn                 = var.cluster_iam_role_arn
+
+  # Control-plane logs only exist through EKS control-plane logging; the
+  # fluentd DaemonSet tails worker-node container logs and never sees them.
+  # Upstream enables only three of the five types, which fails SOC 2
+  # (Vanta: "EKS audit logs enabled"). Retention stays at the upstream 90 days.
+  enabled_log_types = var.cluster_enabled_log_types
   # Node AMI upgrades are opt-in, not automatic. Upstream defaults
   # use_latest_ami_release_version to true, which re-resolves the AMI from SSM
   # on every plan, so any apply rolls every node group as soon as AWS publishes

@@ -21,6 +21,7 @@ locals {
   mon_bastion   = var.enable_monitoring && var.monitoring_ec2_enabled && var.enable_bastion
   mon_nfs       = var.enable_monitoring && var.monitoring_ec2_enabled && var.enable_nfs
   mon_efs       = var.enable_monitoring && var.monitoring_efs_enabled && var.enable_efs
+  mon_alb       = var.enable_monitoring && var.monitoring_alb_enabled
 
   monitoring_account_id = data.aws_caller_identity.current.account_id
   monitoring_name       = var.monitoring_alarm_name_prefix != "" ? var.monitoring_alarm_name_prefix : var.cluster_name
@@ -263,6 +264,124 @@ resource "aws_cloudwatch_metric_alarm" "eks_failed_nodes" {
   namespace           = "ContainerInsights"
   metric_name         = "cluster_failed_node_count"
   dimensions          = { ClusterName = module.eks.cluster_name }
+  statistic           = "Maximum"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = 0
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
+################################################################################
+# EKS node groups / EC2 Auto Scaling
+# Per-ASG CPUUtilization from AWS/EC2. The Container Insights node alarm above
+# covers the cluster-wide worst node; SOC 2 tooling (Vanta "Server CPU
+# monitored") looks for an AWS/EC2 CPUUtilization alarm on every ASG.
+################################################################################
+
+resource "aws_cloudwatch_metric_alarm" "eks_node_group_cpu" {
+  for_each            = local.mon_eks ? var.eks_managed_node_groups : {}
+  alarm_name          = "${local.monitoring_name}-asg-${each.key}-cpu-high"
+  alarm_description   = "Average CPU utilization of node group ${each.key} is above ${var.eks_node_cpu_threshold}%"
+  namespace           = "AWS/EC2"
+  metric_name         = "CPUUtilization"
+  dimensions          = { AutoScalingGroupName = module.eks.eks_managed_node_groups[each.key].node_group_autoscaling_group_names[0] }
+  statistic           = "Average"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.eks_node_cpu_threshold
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = var.monitoring_treat_missing_data
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
+################################################################################
+# Ingress ALBs (AWS Load Balancer Controller)
+# The ALB and its target groups are created by the controller from Kubernetes
+# Ingress objects, not by Terraform, so they are discovered by the
+# controller's elbv2.k8s.aws/cluster tag. Target groups are matched to their
+# ALB by the shared ingress.k8s.aws/stack tag. Before the ingress exists
+# (greenfield) the lookups return nothing and no alarms are created. A target
+# group added later by a Kubernetes change gets its alarm on the next apply.
+################################################################################
+
+data "aws_resourcegroupstaggingapi_resources" "ingress_albs" {
+  count                 = local.mon_alb ? 1 : 0
+  resource_type_filters = ["elasticloadbalancing:loadbalancer"]
+
+  tag_filter {
+    key    = "elbv2.k8s.aws/cluster"
+    values = [var.cluster_name]
+  }
+}
+
+data "aws_resourcegroupstaggingapi_resources" "ingress_target_groups" {
+  count                 = local.mon_alb ? 1 : 0
+  resource_type_filters = ["elasticloadbalancing:targetgroup"]
+
+  tag_filter {
+    key    = "elbv2.k8s.aws/cluster"
+    values = [var.cluster_name]
+  }
+}
+
+locals {
+  # ALB ARN suffix ("app/<name>/<id>", the CloudWatch LoadBalancer dimension) => ingress stack
+  ingress_albs = {
+    for r in try(data.aws_resourcegroupstaggingapi_resources.ingress_albs[0].resource_tag_mapping_list, []) :
+    regex("loadbalancer/(app/.+)$", r.resource_arn)[0] => lookup(r.tags, "ingress.k8s.aws/stack", "")
+    if can(regex("loadbalancer/app/", r.resource_arn))
+  }
+
+  # Target group ARN suffix ("targetgroup/<name>/<id>", the TargetGroup dimension) => ingress stack
+  ingress_target_groups = {
+    for r in try(data.aws_resourcegroupstaggingapi_resources.ingress_target_groups[0].resource_tag_mapping_list, []) :
+    regex("(targetgroup/.+)$", r.resource_arn)[0] => lookup(r.tags, "ingress.k8s.aws/stack", "")
+  }
+
+  # UnHealthyHostCount has no LoadBalancer-only dimension, so alarm per ALB/target-group pair.
+  ingress_alb_target_groups = merge([
+    for lb, stack in local.ingress_albs : {
+      for tg, tg_stack in local.ingress_target_groups :
+      "${split("/", lb)[1]}/${split("/", tg)[1]}" => { lb = lb, tg = tg }
+      if stack != "" && tg_stack == stack
+    }
+  ]...)
+}
+
+resource "aws_cloudwatch_metric_alarm" "alb_latency" {
+  for_each            = local.ingress_albs
+  alarm_name          = "${local.monitoring_name}-alb-${split("/", each.key)[1]}-latency-high"
+  alarm_description   = "p95 target response time on ALB ${split("/", each.key)[1]} is above ${var.alb_latency_threshold_seconds}s"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "TargetResponseTime"
+  dimensions          = { LoadBalancer = each.key }
+  extended_statistic  = "p95"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.alb_latency_threshold_seconds
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
+  for_each            = local.ingress_alb_target_groups
+  alarm_name          = "${local.monitoring_name}-alb-${each.key}-unhealthy-hosts"
+  alarm_description   = "Target group ${split("/", each.value.tg)[1]} behind ALB ${split("/", each.value.lb)[1]} has unhealthy targets"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = "UnHealthyHostCount"
+  dimensions          = { LoadBalancer = each.value.lb, TargetGroup = each.value.tg }
   statistic           = "Maximum"
   comparison_operator = "GreaterThanThreshold"
   threshold           = 0

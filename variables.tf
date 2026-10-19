@@ -70,6 +70,12 @@ variable "cluster_endpoint_public_access_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "cluster_enabled_log_types" {
+  description = "EKS control-plane log types sent to CloudWatch Logs (/aws/eks/<cluster>/cluster)"
+  type        = list(string)
+  default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+}
+
 variable "cluster_endpoint_private_access" {
   description = "Enable private access to EKS cluster endpoint"
   type        = bool
@@ -505,9 +511,43 @@ variable "manage_master_user_password" {
 }
 
 variable "parameter_group_name" {
-  description = "Name of the DB parameter group to associate"
+  description = "Existing DB parameter group to associate. Only used when manage_postgres_parameter_group = false"
   type        = string
   default     = null
+}
+
+variable "manage_postgres_parameter_group" {
+  description = "Create and attach a module-managed parameter group (<db_identifier>-pg<major>) with pgaudit enabled. Carry any settings from a previous hand-made group over in postgres_parameters."
+  type        = bool
+  default     = true
+}
+
+variable "postgres_pgaudit_log_classes" {
+  description = "pgaudit.log statement classes to audit. ddl,role covers schema and privilege changes without logging every application write; use all only with care."
+  type        = string
+  default     = "ddl,role"
+}
+
+variable "postgres_parameters" {
+  description = "Extra DB parameters for the module-managed parameter group, applied on top of the pgaudit baseline"
+  type = list(object({
+    name         = string
+    value        = string
+    apply_method = optional(string, "immediate")
+  }))
+  default = []
+}
+
+variable "postgres_cloudwatch_logs_exports" {
+  description = "RDS log types to export to CloudWatch Logs. postgresql carries the pgaudit records."
+  type        = list(string)
+  default     = ["postgresql"]
+}
+
+variable "postgres_log_retention_in_days" {
+  description = "Retention for the RDS CloudWatch log group(s)"
+  type        = number
+  default     = 90
 }
 
 variable "skip_final_snapshot" {
