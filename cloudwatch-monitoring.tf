@@ -284,7 +284,9 @@ resource "aws_cloudwatch_metric_alarm" "eks_failed_nodes" {
 ################################################################################
 
 resource "aws_cloudwatch_metric_alarm" "eks_node_group_cpu" {
-  for_each            = local.mon_eks ? var.eks_managed_node_groups : {}
+  # A for expression, not a conditional: var.eks_managed_node_groups is `any`,
+  # so `cond ? var.eks_managed_node_groups : {}` fails with inconsistent types.
+  for_each            = { for k, v in var.eks_managed_node_groups : k => v if local.mon_eks }
   alarm_name          = "${local.monitoring_name}-asg-${each.key}-cpu-high"
   alarm_description   = "Average CPU utilization of node group ${each.key} is above ${var.eks_node_cpu_threshold}%"
   namespace           = "AWS/EC2"
