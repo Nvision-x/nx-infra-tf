@@ -172,6 +172,12 @@ variable "eks_node_cpu_threshold" {
   default     = 85
 }
 
+variable "alb_5xx_threshold" {
+  description = "Alarm when an ingress ALB's 5XX count (ELB-generated or target-returned, each alarmed separately) exceeds this per monitoring_alarm_period"
+  type        = number
+  default     = 10
+}
+
 variable "alb_latency_threshold_seconds" {
   description = "Alarm when an ingress ALB's p95 TargetResponseTime (seconds) exceeds this"
   type        = number

@@ -377,6 +377,33 @@ resource "aws_cloudwatch_metric_alarm" "alb_latency" {
   tags                = var.tags
 }
 
+# 5XX counts, both the ones the ALB generates itself (no healthy target, timeouts)
+# and the ones the targets return. SOC 2 tooling (Vanta "Load balancer server
+# errors monitored") looks for a 5XX alarm on every ALB.
+resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
+  for_each = merge([
+    for lb, stack in local.ingress_albs : {
+      for src, metric in { elb = "HTTPCode_ELB_5XX_Count", target = "HTTPCode_Target_5XX_Count" } :
+      "${lb}|${src}" => { lb = lb, src = src, metric = metric }
+    }
+  ]...)
+  alarm_name          = "${local.monitoring_name}-alb-${split("/", each.value.lb)[1]}-${each.value.src}-5xx-high"
+  alarm_description   = "${each.value.metric} on ALB ${split("/", each.value.lb)[1]} is above ${var.alb_5xx_threshold} per ${var.monitoring_alarm_period}s"
+  namespace           = "AWS/ApplicationELB"
+  metric_name         = each.value.metric
+  dimensions          = { LoadBalancer = each.value.lb }
+  statistic           = "Sum"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.alb_5xx_threshold
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
 resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
   for_each            = local.ingress_alb_target_groups
   alarm_name          = "${local.monitoring_name}-alb-${each.key}-unhealthy-hosts"
