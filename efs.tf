@@ -7,12 +7,20 @@
 resource "aws_efs_file_system" "this" {
   count = var.enable_efs ? 1 : 0
 
-  encrypted  = true
+  encrypted       = true
   throughput_mode = "elastic"
 
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-efs"
   })
+}
+
+locals {
+  efs_ingress_security_group_ids = concat(
+    var.efs_restrict_ingress_to_cluster_nodes ? [module.eks.node_security_group_id] : [],
+    var.efs_allowed_security_group_ids,
+  )
+  efs_restrict_ingress = length(local.efs_ingress_security_group_ids) > 0
 }
 
 resource "aws_security_group" "efs" {
@@ -22,12 +30,26 @@ resource "aws_security_group" "efs" {
   description = "Allow NFS traffic from VPC for EFS"
   vpc_id      = var.vpc_id
 
-  ingress {
-    description = "NFS from VPC"
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr_block]
+  dynamic "ingress" {
+    for_each = local.efs_restrict_ingress ? [] : [1]
+    content {
+      description = "NFS from VPC"
+      from_port   = 2049
+      to_port     = 2049
+      protocol    = "tcp"
+      cidr_blocks = [var.vpc_cidr_block]
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = local.efs_restrict_ingress ? [1] : []
+    content {
+      description     = "NFS from allowed security groups"
+      from_port       = 2049
+      to_port         = 2049
+      protocol        = "tcp"
+      security_groups = local.efs_ingress_security_group_ids
+    }
   }
 
   egress {
@@ -40,6 +62,55 @@ resource "aws_security_group" "efs" {
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-efs-sg"
   })
+}
+
+# Without a filesystem policy EFS allows any client that reaches a mount target to mount
+# unauthenticated. Default: allow only via mount targets, deny anything not over TLS.
+data "aws_iam_policy_document" "efs" {
+  count = var.enable_efs && var.enable_efs_file_system_policy && var.efs_file_system_policy == null ? 1 : 0
+
+  statement {
+    sid       = "AllowViaMountTarget"
+    effect    = "Allow"
+    actions   = ["elasticfilesystem:ClientMount", "elasticfilesystem:ClientWrite", "elasticfilesystem:ClientRootAccess"]
+    resources = [aws_efs_file_system.this[0].arn]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "elasticfilesystem:AccessedViaMountTarget"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "DenyInsecureTransport"
+    effect    = "Deny"
+    actions   = ["*"]
+    resources = [aws_efs_file_system.this[0].arn]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_efs_file_system_policy" "this" {
+  count = var.enable_efs && var.enable_efs_file_system_policy ? 1 : 0
+
+  file_system_id = aws_efs_file_system.this[0].id
+  policy         = coalesce(var.efs_file_system_policy, try(data.aws_iam_policy_document.efs[0].json, null))
 }
 
 resource "aws_efs_mount_target" "this" {
