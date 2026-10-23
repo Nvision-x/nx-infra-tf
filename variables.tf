@@ -177,6 +177,30 @@ variable "enable_efs" {
   default     = false
 }
 
+variable "enable_efs_file_system_policy" {
+  description = "Attach a filesystem policy to the EFS filesystem. Without one, any client that reaches a mount target can mount it unauthenticated."
+  type        = bool
+  default     = true
+}
+
+variable "efs_file_system_policy" {
+  description = "Custom EFS filesystem policy JSON. null uses the module default: allow only via mount targets and deny non-TLS access."
+  type        = string
+  default     = null
+}
+
+variable "efs_restrict_ingress_to_cluster_nodes" {
+  description = "Allow NFS to the EFS mount targets from the EKS node security group instead of the whole VPC CIDR"
+  type        = bool
+  default     = false
+}
+
+variable "efs_allowed_security_group_ids" {
+  description = "Additional security groups allowed NFS to the EFS mount targets. When set (or efs_restrict_ingress_to_cluster_nodes is true) the VPC CIDR rule is removed."
+  type        = list(string)
+  default     = []
+}
+
 variable "efs_csi_role_arn" {
   description = "IAM role ARN for EFS CSI controller (from nx-iam-tf)"
   type        = string
