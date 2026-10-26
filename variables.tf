@@ -177,6 +177,30 @@ variable "enable_efs" {
   default     = false
 }
 
+variable "enable_efs_file_system_policy" {
+  description = "Attach a filesystem policy to the EFS filesystem. Without one, any client that reaches a mount target can mount it unauthenticated."
+  type        = bool
+  default     = true
+}
+
+variable "efs_file_system_policy" {
+  description = "Custom EFS filesystem policy JSON. null uses the module default: allow only via mount targets and deny non-TLS access."
+  type        = string
+  default     = null
+}
+
+variable "efs_restrict_ingress_to_cluster_nodes" {
+  description = "Allow NFS to the EFS mount targets from the EKS node security group instead of the whole VPC CIDR"
+  type        = bool
+  default     = false
+}
+
+variable "efs_allowed_security_group_ids" {
+  description = "Additional security groups allowed NFS to the EFS mount targets. When set (or efs_restrict_ingress_to_cluster_nodes is true) the VPC CIDR rule is removed."
+  type        = list(string)
+  default     = []
+}
+
 variable "efs_csi_role_arn" {
   description = "IAM role ARN for EFS CSI controller (from nx-iam-tf)"
   type        = string
@@ -667,9 +691,15 @@ variable "engine_version" {
 }
 
 variable "opensearch_advanced_options" {
-  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). Use to codify operational overrides such as override_main_response_version that would otherwise show as perpetual phantom drift (OpenSearch UpdateDomainConfig has PATCH, not REPLACE, semantics for advancedOptions)."
+  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). A merge cannot remove a key, so this does not fix drift from a key AWS still reports; see opensearch_manage_advanced_options."
   type        = map(string)
   default     = {}
+}
+
+variable "opensearch_manage_advanced_options" {
+  description = "Manage advanced_options on the OpenSearch domain. Set false on a domain upgraded past OpenSearch 1.x that still reports override_main_response_version: AWS rejects that key on 2.x+ and ignores its removal, so the plan never converges. When false, Terraform leaves advanced_options as they are on the domain."
+  type        = bool
+  default     = true
 }
 
 variable "enable_masternodes" {
