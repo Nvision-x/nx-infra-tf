@@ -151,5 +151,5 @@ module "opensearch" {
     ]
   })
 
-  tags = var.tags
+  tags = merge(var.tags, lookup(local.user_data_tags, "opensearch", {}))
 }

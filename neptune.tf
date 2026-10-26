@@ -56,7 +56,7 @@ resource "aws_neptune_cluster" "this" {
     max_capacity = var.neptune_max_ncu
   }
 
-  tags = var.tags
+  tags = merge(var.tags, lookup(local.user_data_tags, "neptune", {}))
 }
 
 resource "aws_neptune_cluster_instance" "this" {

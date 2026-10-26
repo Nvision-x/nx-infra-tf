@@ -7,12 +7,12 @@
 resource "aws_efs_file_system" "this" {
   count = var.enable_efs ? 1 : 0
 
-  encrypted  = true
+  encrypted       = true
   throughput_mode = "elastic"
 
   tags = merge(var.tags, {
     Name = "${var.cluster_name}-efs"
-  })
+  }, lookup(local.user_data_tags, "efs", {}))
 }
 
 resource "aws_security_group" "efs" {

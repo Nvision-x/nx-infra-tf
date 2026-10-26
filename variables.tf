@@ -805,6 +805,12 @@ variable "s3_force_destroy" {
   default     = false
 }
 
+variable "tag_user_data_resources" {
+  description = "Tag resources that hold customer data with ContainsUserData = \"true\" and a UserDataStored description, for Vanta's user-data inventory mapping"
+  type        = bool
+  default     = true
+}
+
 variable "s3_noncurrent_version_expiration_days" {
   description = "Days to keep noncurrent object versions in the versioned buckets that have an expiration (logs, postgres-backup, cloudtrail-logs)"
   type        = number

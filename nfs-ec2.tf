@@ -60,6 +60,7 @@ resource "aws_instance" "nfs_ec2" {
     var.tags,
     {
       Name = var.ec2_name
-    }
+    },
+    lookup(local.user_data_tags, "nfs", {})
   )
 }
