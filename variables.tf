@@ -667,9 +667,15 @@ variable "engine_version" {
 }
 
 variable "opensearch_advanced_options" {
-  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). Use to codify operational overrides such as override_main_response_version that would otherwise show as perpetual phantom drift (OpenSearch UpdateDomainConfig has PATCH, not REPLACE, semantics for advancedOptions)."
+  description = "Additional advanced_options to set on the OpenSearch domain, merged over the module's computed defaults (consumer keys win). A merge cannot remove a key, so this does not fix drift from a key AWS still reports; see opensearch_manage_advanced_options."
   type        = map(string)
   default     = {}
+}
+
+variable "opensearch_manage_advanced_options" {
+  description = "Manage advanced_options on the OpenSearch domain. Set false on a domain upgraded past OpenSearch 1.x that still reports override_main_response_version: AWS rejects that key on 2.x+ and ignores its removal, so the plan never converges. When false, Terraform leaves advanced_options as they are on the domain."
+  type        = bool
+  default     = true
 }
 
 variable "enable_masternodes" {
