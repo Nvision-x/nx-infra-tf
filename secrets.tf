@@ -73,3 +73,8 @@ data "aws_secretsmanager_secret_version" "opensearch" {
   secret_id  = aws_secretsmanager_secret.opensearch_secret[0].id
 }
 
+data "aws_secretsmanager_secret_version" "app_opensearch" {
+  count     = var.app_opensearch_password_secret_arn != "" ? 1 : 0
+  secret_id = var.app_opensearch_password_secret_arn
+}
+

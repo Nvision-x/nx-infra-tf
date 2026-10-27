@@ -636,6 +636,26 @@ variable "existing_opensearch_password" {
   default     = ""
 }
 
+# Point the app (infra-config / infra-secrets) at an OpenSearch domain other than the
+# one this module manages, e.g. a replacement domain during a migration.
+variable "app_opensearch_endpoint" {
+  description = "OpenSearch host for the app's infra-config; empty = this module's domain"
+  type        = string
+  default     = ""
+}
+
+variable "app_opensearch_username" {
+  description = "OpenSearch username for infra-config; empty = master_user_name"
+  type        = string
+  default     = ""
+}
+
+variable "app_opensearch_password_secret_arn" {
+  description = "Secrets Manager secret (JSON with a `password` key) for infra-secrets; empty = this module's secret"
+  type        = string
+  default     = ""
+}
+
 variable "opensearch_instance_type" {
   description = "The type of instance for the OpenSearch cluster"
   type        = string

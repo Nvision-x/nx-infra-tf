@@ -161,8 +161,8 @@ locals {
   pg_host     = var.enable_postgres ? module.postgresql[0].db_instance_address : null
   pg_username = var.enable_postgres ? var.username : null
 
-  os_host     = var.enable_opensearch ? module.opensearch[0].domain_endpoint : null
-  os_username = var.enable_opensearch ? var.master_user_name : null
+  os_host     = var.app_opensearch_endpoint != "" ? var.app_opensearch_endpoint : (var.enable_opensearch ? module.opensearch[0].domain_endpoint : null)
+  os_username = var.app_opensearch_username != "" ? var.app_opensearch_username : (var.enable_opensearch ? var.master_user_name : null)
 
   neptune_host = var.enable_neptune ? aws_neptune_cluster.this[0].endpoint : null
   neptune_port = var.enable_neptune ? tostring(aws_neptune_cluster.this[0].port) : null
@@ -235,7 +235,7 @@ resource "kubernetes_secret_v1" "infra_secrets" {
   }
   data = {
     POSTGRES_PASSWORD   = jsondecode(data.aws_secretsmanager_secret_version.postgres[0].secret_string).password
-    OPENSEARCH_PASSWORD = jsondecode(data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
+    OPENSEARCH_PASSWORD = jsondecode(var.app_opensearch_password_secret_arn != "" ? data.aws_secretsmanager_secret_version.app_opensearch[0].secret_string : data.aws_secretsmanager_secret_version.opensearch[0].secret_string).password
   }
   type = "Opaque"
 }
