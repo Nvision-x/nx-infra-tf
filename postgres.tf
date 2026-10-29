@@ -106,4 +106,5 @@ module "postgresql" {
   create_cloudwatch_log_group            = length(var.postgres_cloudwatch_logs_exports) > 0
   cloudwatch_log_group_retention_in_days = var.postgres_log_retention_in_days
   tags                                   = var.tags
+  db_instance_tags                       = lookup(local.user_data_tags, "postgres", {})
 }

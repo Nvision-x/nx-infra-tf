@@ -10,5 +10,5 @@ resource "aws_s3vectors_vector_bucket" "this" {
     sse_type = "AES256"
   }
 
-  tags = var.tags
+  tags = merge(var.tags, lookup(local.user_data_tags, "s3_vectors", {}))
 }

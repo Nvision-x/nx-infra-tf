@@ -8,6 +8,36 @@ locals {
   # and would just accumulate noncurrent versions.
   unversioned_buckets = ["raw-content-cache", "text-content-cache"]
 
+  # Resources holding customer data carry ContainsUserData / UserDataStored.
+  # Vanta maps these tags (bulk tagging) to VantaContainsUserData and
+  # VantaUserDataStored, so its inventory stays current without manual marking.
+  user_data_buckets = {
+    "minio"              = "Customer documents ingested from connected data sources"
+    "csvfiles"           = "Customer CSV uploads"
+    "downloads"          = "Reports and files exported by users"
+    "raw-content-cache"  = "Raw copies of scanned customer files"
+    "text-content-cache" = "Text extracted from scanned customer files"
+    "postgres-backup"    = "PostgreSQL backups (application data and customer metadata)"
+    "os-backup"          = "OpenSearch snapshots (indexed customer content)"
+  }
+  user_data_tag_values = {
+    postgres   = "Application database: user accounts, customer metadata and scan results"
+    opensearch = "Search index of customer content and scan results"
+    efs        = "Shared application storage used while processing customer content"
+    neptune    = "Graph data derived from customer content"
+    nfs        = "Shared application file storage holding customer content"
+    s3_vectors = "Embeddings derived from customer content"
+  }
+  # Empty when tagging is turned off; built with for-expressions so both branches share one type.
+  user_data_tags = { for k, v in local.user_data_tag_values : k => {
+    ContainsUserData = "true"
+    UserDataStored   = v
+  } if var.tag_user_data_resources }
+  user_data_bucket_tags = { for k, v in local.user_data_buckets : k => {
+    ContainsUserData = "true"
+    UserDataStored   = v
+  } if var.tag_user_data_resources }
+
   # User/tenant content: no object expiration, but old versions age out.
   content_buckets = ["applogo", "companylogo", "downloads", "minio", "csvfiles"]
 
@@ -30,11 +60,11 @@ resource "aws_s3_bucket" "nvisionx_buckets" {
   bucket        = "nvisionx-${each.key}-${each.value.hex}"
   force_destroy = var.s3_force_destroy
 
-  tags = {
+  tags = merge({
     Name    = "nvisionx-${each.key}"
     Purpose = "Bucket for ${each.key}"
     Project = "NvisionX"
-  }
+  }, lookup(local.user_data_bucket_tags, each.key, {}))
 }
 
 resource "aws_s3_bucket_versioning" "nvisionx_buckets" {

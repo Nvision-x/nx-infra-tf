@@ -93,15 +93,7 @@ bastion_security_group_name = "nx-bastion-sg"
 bastion_existing_pem        = ""
 bastion_eks_admin_role_arn  = "arn:aws:iam::285358649488:role/bastion-eks-role-eks-jun23"
 bastion_profile_name        = "bastion-profile-eks-jun23"
-bastion_ingress_rules = [
-  {
-    description = "Allow SSH access from VPC"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-]
+bastion_ingress_rules       = [] # no SSH; reach the bastion via SSM Session Manager
 
 # RDS PostgreSQL (disabled)
 enable_postgres             = false
