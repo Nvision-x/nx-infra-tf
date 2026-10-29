@@ -8,29 +8,36 @@ resource "aws_security_group" "bastion_ec2_sg" {
   description = var.bastion_security_group_description
   vpc_id      = var.vpc_id
 
-  dynamic "ingress" {
-    for_each = var.bastion_ingress_rules
-    content {
-      description = ingress.value.description
-      from_port   = ingress.value.from_port
-      to_port     = ingress.value.to_port
-      protocol    = ingress.value.protocol
-      cidr_blocks = ingress.value.cidr_blocks
-    }
-  }
+  # Attribute syntax, not dynamic blocks: zero dynamic "ingress" blocks reads as
+  # "ingress not configured" and the provider keeps the live rules, so emptying
+  # bastion_ingress_rules never removed the old SSH rules. An explicit list makes
+  # [] mean "no ingress". Inline (not aws_security_group_rule) because this SG
+  # manages rules inline, so a standalone rule would be removed on the next apply.
+  ingress = concat(
+    [for r in var.bastion_ingress_rules : {
+      description      = r.description
+      from_port        = r.from_port
+      to_port          = r.to_port
+      protocol         = r.protocol
+      cidr_blocks      = r.cidr_blocks
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }],
+    local.heartbeat_ssh_enabled ? [{
+      description      = "SSH reachability probe from the heartbeat Lambda"
+      from_port        = 22
+      to_port          = 22
+      protocol         = "tcp"
+      cidr_blocks      = []
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = [aws_security_group.bastion_heartbeat[0].id]
+      self             = false
+    }] : []
+  )
 
-  # inline (not aws_security_group_rule): this SG manages rules inline, so a
-  # standalone rule would be removed on the next SG apply
-  dynamic "ingress" {
-    for_each = local.heartbeat_ssh_enabled ? [1] : []
-    content {
-      description     = "SSH reachability probe from the heartbeat Lambda"
-      from_port       = 22
-      to_port         = 22
-      protocol        = "tcp"
-      security_groups = [aws_security_group.bastion_heartbeat[0].id]
-    }
-  }
   egress {
     from_port   = 0
     to_port     = 0
