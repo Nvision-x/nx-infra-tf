@@ -9,6 +9,8 @@ locals {
   unversioned_buckets = ["raw-content-cache", "text-content-cache"]
 
   # Resources holding customer data carry ContainsUserData / UserDataStored.
+  # Values must stay within letters, digits, spaces and _ . : / = + - @ (no commas
+  # or parentheses): RDS and S3 reject anything else, and the apply fails.
   # Vanta maps these tags (bulk tagging) to VantaContainsUserData and
   # VantaUserDataStored, so its inventory stays current without manual marking.
   user_data_buckets = {
@@ -17,11 +19,11 @@ locals {
     "downloads"          = "Reports and files exported by users"
     "raw-content-cache"  = "Raw copies of scanned customer files"
     "text-content-cache" = "Text extracted from scanned customer files"
-    "postgres-backup"    = "PostgreSQL backups (application data and customer metadata)"
-    "os-backup"          = "OpenSearch snapshots (indexed customer content)"
+    "postgres-backup"    = "PostgreSQL backups of application data and customer metadata"
+    "os-backup"          = "OpenSearch snapshots of indexed customer content"
   }
   user_data_tag_values = {
-    postgres   = "Application database: user accounts, customer metadata and scan results"
+    postgres   = "Application database with user accounts and customer metadata and scan results"
     opensearch = "Search index of customer content and scan results"
     efs        = "Shared application storage used while processing customer content"
     neptune    = "Graph data derived from customer content"
