@@ -1,12 +1,12 @@
 resource "random_id" "s3_suffix" {
-  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup", "cloudtrail-logs", "downloads", "raw-content-cache", "text-content-cache"])
+  for_each    = toset(["logs", "minio", "companylogo", "csvfiles", "applogo", "os-backup", "postgres-backup", "cloudtrail-logs", "downloads", "raw-content-cache", "text-content-cache", "lexicon-insights"])
   byte_length = 4
 }
 
 locals {
   # Buckets that hold immutable, idempotent objects — versioning is unnecessary
   # and would just accumulate noncurrent versions.
-  unversioned_buckets = ["raw-content-cache", "text-content-cache"]
+  unversioned_buckets = ["raw-content-cache", "text-content-cache", "lexicon-insights"]
 
   # Resources holding customer data carry ContainsUserData / UserDataStored.
   # Values must stay within letters, digits, spaces and _ . : / = + - @ (no commas
@@ -21,6 +21,7 @@ locals {
     "text-content-cache" = "Text extracted from scanned customer files"
     "postgres-backup"    = "PostgreSQL backups of application data and customer metadata"
     "os-backup"          = "OpenSearch snapshots of indexed customer content"
+    "lexicon-insights"   = "Temporary term analysis files derived from customer documents"
   }
   user_data_tag_values = {
     postgres   = "Application database with user accounts and customer metadata and scan results"
@@ -54,6 +55,7 @@ locals {
     "postgres-backup"   = 180
     "cloudtrail-logs"   = 180
     "raw-content-cache" = 1
+    "lexicon-insights"  = 3
   }
 }
 
