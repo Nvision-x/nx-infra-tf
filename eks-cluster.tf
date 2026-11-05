@@ -195,6 +195,7 @@ resource "kubernetes_config_map_v1" "infra_config" {
       S3_OPENSEARCH_BACKUP_BUCKET   = aws_s3_bucket.nvisionx_buckets["os-backup"].bucket
       S3_RAW_CONTENT_CACHE_BUCKET   = aws_s3_bucket.nvisionx_buckets["raw-content-cache"].bucket
       S3_TEXT_CONTENT_CACHE_BUCKET  = aws_s3_bucket.nvisionx_buckets["text-content-cache"].bucket
+      S3_LEXICON_INSIGHTS_BUCKET    = aws_s3_bucket.nvisionx_buckets["lexicon-insights"].bucket
       APPCUES_ACCOUNT_ID            = var.appcues_account_id
       APPCUES_BUNDLE_DOMAIN         = var.appcues_bundle_domain
       APPCUES_API_HOSTNAME          = var.appcues_api_hostname
