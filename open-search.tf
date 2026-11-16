@@ -65,8 +65,8 @@ module "opensearch" {
   version               = "~> 2.0"
   create_security_group = false
 
-  # Domain
-  advanced_options = local.advanced_options
+  # Domain. null leaves advanced_options unmanaged (the attribute is Optional+Computed).
+  advanced_options = var.opensearch_manage_advanced_options ? local.advanced_options : null
 
   advanced_security_options = {
     enabled                        = true
