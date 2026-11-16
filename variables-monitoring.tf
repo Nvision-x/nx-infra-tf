@@ -464,3 +464,53 @@ variable "bastion_heartbeat_tailscaled_check_enabled" {
   type        = bool
   default     = true
 }
+
+# ------------------- Database auto-alarms --------------------------------
+
+variable "monitoring_db_auto_alarms_enabled" {
+  description = "Deploy the Lambda that creates CPU/memory/storage/IO alarms for every RDS, Aurora, Neptune and DocumentDB instance in the account that lacks them (only applied when enable_monitoring = true). Needs db_auto_alarms_role_arn from nx-iam-tf."
+  type        = bool
+  default     = false
+}
+
+variable "db_auto_alarms_role_arn" {
+  description = "Execution role for the database auto-alarms Lambda, from nx-iam-tf's db_auto_alarms_role_arn output (enable_db_auto_alarms_role = true there)"
+  type        = string
+  default     = ""
+}
+
+variable "db_auto_alarms_schedule_expression" {
+  description = "How often the auto-alarms Lambda reconciles every database, on top of the create/delete events"
+  type        = string
+  default     = "rate(6 hours)"
+}
+
+variable "db_auto_alarms_opt_out_tag_key" {
+  description = "DB instance tag key that, set to \"off\", excludes the instance from auto-alarms"
+  type        = string
+  default     = "nx:auto-alarms"
+}
+
+variable "db_auto_alarms_free_storage_percent" {
+  description = "Auto-alarms FreeStorageSpace threshold as a percent of allocated storage; the lower of this and rds_free_storage_bytes_threshold is used, so small databases still alarm"
+  type        = number
+  default     = 10
+}
+
+variable "db_auto_alarms_free_local_storage_bytes" {
+  description = "Auto-alarms FreeLocalStorage threshold (bytes) for Aurora, Neptune and DocumentDB instances, whose data lives on the cluster volume (default 1 GiB)"
+  type        = number
+  default     = 1073741824
+}
+
+variable "db_auto_alarms_volume_write_iops_threshold" {
+  description = "Auto-alarms VolumeWriteIOPs threshold (cluster volume write IOs per period) used as the IO alarm for Neptune/DocumentDB, and for Aurora when it has no DiskQueueDepth data"
+  type        = number
+  default     = 1000000
+}
+
+variable "db_auto_alarms_log_retention_days" {
+  description = "CloudWatch log retention for the auto-alarms Lambda"
+  type        = number
+  default     = 30
+}
