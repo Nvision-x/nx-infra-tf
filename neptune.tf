@@ -3,6 +3,14 @@
 # Identity role (no static credentials). Workload-specific connect permissions
 # live on the role in nx-iam-tf, scoped to this cluster's resource ID.
 
+locals {
+  # Instance IDs from config alone, so they are known at plan time: the
+  # per-instance alarms in cloudwatch-monitoring.tf for_each over this list.
+  neptune_instance_ids = var.enable_neptune ? [
+    for i in range(var.neptune_instance_count) : "${var.neptune_cluster_identifier}-${i + 1}"
+  ] : []
+}
+
 resource "aws_neptune_subnet_group" "this" {
   count       = var.enable_neptune ? 1 : 0
   name        = var.neptune_subnet_group_name
@@ -61,7 +69,7 @@ resource "aws_neptune_cluster" "this" {
 
 resource "aws_neptune_cluster_instance" "this" {
   count              = var.enable_neptune ? var.neptune_instance_count : 0
-  identifier         = "${var.neptune_cluster_identifier}-${count.index + 1}"
+  identifier         = local.neptune_instance_ids[count.index]
   cluster_identifier = aws_neptune_cluster.this[0].id
   engine             = "neptune"
   instance_class     = "db.serverless"

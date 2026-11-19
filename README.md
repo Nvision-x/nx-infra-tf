@@ -204,40 +204,9 @@ opensearch_jvm_pressure_threshold = 80
 - **EKS / Container Insights** — node CPU / memory / disk, failed-node count (via the `amazon-cloudwatch-observability` addon this module installs)
 - **RDS** — CPU, freeable memory, free storage, connections, read/write latency, disk queue depth, swap
 - **OpenSearch** — cluster status red/yellow, free storage, CPU, JVM & old-gen pressure, writes-blocked, node count, snapshot failure, KMS error, 5xx; plus dedicated-master CPU / JVM / reachability
-- **Neptune** — CPU, serverless capacity vs the NCU ceiling, request-queue backlog
+- **Neptune** — CPU, serverless capacity vs the NCU ceiling, request-queue backlog, cluster-volume write IOs; per instance: freeable memory, free local storage
 - **EC2 bastion / NFS** — status-check failures, CPU
 - **EFS** — PercentIOLimit
-- **Any other database** — see *Database auto-alarms* below
-
-**Database auto-alarms** (`monitoring_db_auto_alarms_enabled`)
-
-The alarms above cover the databases this module creates. Opt in to a Lambda
-([`db-auto-alarms.tf`](db-auto-alarms.tf), [`files/db_auto_alarms.py`](files/db_auto_alarms.py))
-so that any instance behind the RDS API in the account — RDS, Aurora, Neptune or
-DocumentDB, created by Terraform, the console or another stack — also gets
-alarmed. This is what Vanta's per-instance tests check ("Database IO monitored",
-"SQL database free storage space monitored", "SQL database freeable memory
-monitored").
-
-- Runs on RDS instance create/restore/delete events and every 6 hours
-  (`db_auto_alarms_schedule_expression`). Every run reconciles the whole account.
-- Per instance: CPU, FreeableMemory, storage (FreeStorageSpace, or
-  FreeLocalStorage for cluster-volume engines) and IO (DiskQueueDepth, or the
-  cluster's VolumeWriteIOPs for Neptune/DocumentDB). Thresholds reuse the `rds_*`
-  variables.
-- Skips a check when another alarm already watches the same metric, so tuned
-  Terraform alarms win. Alarms are named `<prefix>-db-auto-alarms.<instance>.<check>`
-  and deleted when the instance goes away.
-- Opt an instance out with the tag `nx:auto-alarms=off`.
-- A failed run fires `<prefix>-db-auto-alarms-errors`.
-
-```hcl
-# nx-iam-tf
-enable_db_auto_alarms_role = true
-# nx-infra-tf
-monitoring_db_auto_alarms_enabled = true
-db_auto_alarms_role_arn           = module.nx-iam.db_auto_alarms_role_arn
-```
 
 Every category has its own enable/disable flag (`monitoring_rds_enabled`, etc.),
 and an alarm is created only when monitoring is on **and** the underlying
