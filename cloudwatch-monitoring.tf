@@ -910,6 +910,70 @@ resource "aws_cloudwatch_metric_alarm" "neptune_pending_requests" {
   tags                = var.tags
 }
 
+# Per-instance alarms. Vanta's DB tests (freeable memory, free storage, IO)
+# check each instance, so one alarm per instance in neptune_instance_ids.
+
+resource "aws_cloudwatch_metric_alarm" "neptune_freeable_memory" {
+  for_each            = local.mon_neptune ? toset(local.neptune_instance_ids) : toset([])
+  alarm_name          = "${local.monitoring_name}-neptune-${each.key}-freeable-memory-low"
+  alarm_description   = "Neptune instance ${each.key} freeable memory is below ${var.neptune_freeable_memory_bytes_threshold} bytes"
+  namespace           = "AWS/Neptune"
+  metric_name         = "FreeableMemory"
+  dimensions          = { DBInstanceIdentifier = each.key }
+  statistic           = "Average"
+  comparison_operator = "LessThanThreshold"
+  threshold           = var.neptune_freeable_memory_bytes_threshold
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = var.monitoring_treat_missing_data
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
+# Data lives on the cluster volume; FreeLocalStorage is the instance's
+# temp/local storage, the storage metric Neptune publishes per instance.
+resource "aws_cloudwatch_metric_alarm" "neptune_free_local_storage" {
+  for_each            = local.mon_neptune ? toset(local.neptune_instance_ids) : toset([])
+  alarm_name          = "${local.monitoring_name}-neptune-${each.key}-free-local-storage-low"
+  alarm_description   = "Neptune instance ${each.key} free local storage is below ${var.neptune_free_local_storage_bytes_threshold} bytes"
+  namespace           = "AWS/Neptune"
+  metric_name         = "FreeLocalStorage"
+  dimensions          = { DBInstanceIdentifier = each.key }
+  statistic           = "Average"
+  comparison_operator = "LessThanThreshold"
+  threshold           = var.neptune_free_local_storage_bytes_threshold
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = var.monitoring_treat_missing_data
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
+# IO is a cluster-volume metric in Neptune (no per-instance disk queue), so
+# this one is per cluster.
+resource "aws_cloudwatch_metric_alarm" "neptune_volume_write_iops" {
+  count               = local.mon_neptune ? 1 : 0
+  alarm_name          = "${local.monitoring_name}-neptune-volume-write-iops-high"
+  alarm_description   = "Neptune ${var.neptune_cluster_identifier} cluster volume write IOs are above ${var.neptune_volume_write_iops_threshold} per period"
+  namespace           = "AWS/Neptune"
+  metric_name         = "VolumeWriteIOPs"
+  dimensions          = { DBClusterIdentifier = var.neptune_cluster_identifier }
+  statistic           = "Average"
+  comparison_operator = "GreaterThanThreshold"
+  threshold           = var.neptune_volume_write_iops_threshold
+  period              = var.monitoring_alarm_period
+  evaluation_periods  = var.monitoring_alarm_evaluation_periods
+  datapoints_to_alarm = var.monitoring_datapoints_to_alarm
+  treat_missing_data  = var.monitoring_treat_missing_data
+  alarm_actions       = local.monitoring_alarm_actions
+  ok_actions          = local.monitoring_ok_actions
+  tags                = var.tags
+}
+
 ################################################################################
 # EC2 — bastion & NFS
 ################################################################################

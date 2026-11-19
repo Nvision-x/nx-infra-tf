@@ -351,6 +351,24 @@ variable "neptune_main_queue_pending_threshold" {
   default     = 8000
 }
 
+variable "neptune_freeable_memory_bytes_threshold" {
+  description = "Alarm when a Neptune instance's FreeableMemory (bytes) drops below this (default 256 MiB)"
+  type        = number
+  default     = 268435456
+}
+
+variable "neptune_free_local_storage_bytes_threshold" {
+  description = "Alarm when a Neptune instance's FreeLocalStorage (bytes) drops below this (default 1 GiB)"
+  type        = number
+  default     = 1073741824
+}
+
+variable "neptune_volume_write_iops_threshold" {
+  description = "Alarm when the Neptune cluster's VolumeWriteIOPs (write IOs per period) exceeds this"
+  type        = number
+  default     = 1000000
+}
+
 # --------------------------------------------------------------------------- #
 # EC2 (bastion / NFS) thresholds
 # --------------------------------------------------------------------------- #

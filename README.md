@@ -204,7 +204,7 @@ opensearch_jvm_pressure_threshold = 80
 - **EKS / Container Insights** — node CPU / memory / disk, failed-node count (via the `amazon-cloudwatch-observability` addon this module installs)
 - **RDS** — CPU, freeable memory, free storage, connections, read/write latency, disk queue depth, swap
 - **OpenSearch** — cluster status red/yellow, free storage, CPU, JVM & old-gen pressure, writes-blocked, node count, snapshot failure, KMS error, 5xx; plus dedicated-master CPU / JVM / reachability
-- **Neptune** — CPU, serverless capacity vs the NCU ceiling, request-queue backlog
+- **Neptune** — CPU, serverless capacity vs the NCU ceiling, request-queue backlog, cluster-volume write IOs; per instance: freeable memory, free local storage
 - **EC2 bastion / NFS** — status-check failures, CPU
 - **EFS** — PercentIOLimit
 
